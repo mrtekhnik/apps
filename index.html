@@ -133,7 +133,7 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 <div id="updBar" class="hidden"><span>Доступна новая версия</span><button id="updBtn">Обновить</button></div>
 <script>
 'use strict';
-const APP_VERSION='1.4',APP_DATE='15.11.2026';
+const APP_VERSION='1.5',APP_DATE='15.11.2026';
 const OWNER='mrtekhnik',PUB_HOST='mrtekhnik.github.io';
 const API=`https://api.github.com/users/${OWNER}/repos?per_page=100`;
 const EXCLUDE=['apps',PUB_HOST];
@@ -230,9 +230,17 @@ async function probe(url){
   if(ml&&ml.getAttribute('href')){try{const mu=new URL(ml.getAttribute('href'),base).href;const mr=await fetch(mu,{cache:'no-cache'});
     if(mr.ok){const m=await mr.json();title=String(m.name||m.short_name||title||'').trim();icon=pickIcon(m.icons,mu);}}catch(e){}}
   return {title,icon};}
-// версия на сервере — из sw.js приложения (VERSION / VER, иначе имя кэша CACHE); null — не удалось узнать
-async function probeVer(url){try{const r=await fetch(url+'sw.js',{cache:'no-store'});if(!r.ok)return '';const t=await r.text();
-  let m=t.match(/\b(?:VERSION|VER)\s*=\s*['"]([^'"]+)['"]/);if(m)return m[1];m=t.match(/\bCACHE\s*=\s*['"]([^'"]+)['"]/);return m?m[1]:'';}catch(e){return null;}}
+// версия на сервере — из sw.js приложения: VERSION, иначе VER, иначе CACHE.
+// Понимает и составные записи: const PREFIX='x-'; const VERSION = PREFIX + 'v1.1'. '' — не нашлась, null — нет связи
+function swVersion(t){const defs={};
+  for(const m of t.matchAll(/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*((?:\s*(?:'[^'\n]*'|"[^"\n]*"|`[^`$\n]*`|[A-Za-z_$][\w$]*)\s*\+?)+)\s*[;,\n]/g))
+    if(!(m[1] in defs))defs[m[1]]=m[2];
+  const res=(name,depth)=>{if(depth>5||!(name in defs))return null;let out='';
+    for(const part of defs[name].split('+').map(x=>x.trim()).filter(Boolean)){
+      if(/^['"`]/.test(part))out+=part.slice(1,-1);else{const v=res(part,depth+1);if(v==null)return null;out+=v;}}
+    return out;};
+  for(const n of ['VERSION','VER','CACHE']){const v=res(n,0);if(v)return v;}return '';}
+async function probeVer(url){try{const r=await fetch(url+'sw.js',{cache:'no-store'});if(!r.ok)return '';return swVersion(await r.text());}catch(e){return null;}}
 let busy=false,listStatus=lsGet(LS.status)||'';
 function setStatus(s){listStatus=s;lsSet(LS.status,s);}
 function statusLine(){const ok=lsGet(LS.okAt);
@@ -277,7 +285,12 @@ async function appCaches(){const map=new Map();if(!('caches' in window))return m
     for(const r of await c.keys()){try{const u=new URL(r.url);if(u.origin===location.origin){const sg=u.pathname.split('/')[1];if(sg)segs.add(decodeURIComponent(sg).toLowerCase());}}catch(e){}}
     for(const sg of segs){if(!map.has(sg))map.set(sg,[]);map.get(sg).push(n);}}}catch(e){}
   return map;}
-const hasNewVer=(a,map)=>{if(!a.srvVer)return false;const names=map.get(a.id);return !!(names&&names.length)&&!names.some(n=>n.endsWith(a.srvVer));};
+// сравнение с копией программы на устройстве; если копию стёрли — с последней версией, которую лаунчер видел на устройстве
+function hasNewVer(a,map){if(!a.srvVer)return false;const names=map.get(a.id)||[];
+  if(names.some(n=>n.endsWith(a.srvVer))){if(a.seenVer!==a.srvVer){a.seenVer=a.srvVer;saveApp(a);}return false;}
+  if(names.length)return true;
+  return !!a.seenVer&&a.seenVer!==a.srvVer;}
+function saveApp(a){if(db)tx('apps','readwrite',t=>t.objectStore('apps').put(a)).catch(()=>{});}
 const lsJ=k=>{try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}};
 const tsOf=v=>{if(!v)return 0;if(typeof v==='number')return v;const t=Date.parse(v);return isNaN(t)?0:t;};
 const idbReq=q=>new Promise((res,rej)=>{q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});
