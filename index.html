@@ -107,6 +107,10 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 #tabFrames iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff}
 #tabFrames iframe.off{visibility:hidden;pointer-events:none}
 .tile.open .ico{box-shadow:0 0 0 3px var(--accent)}
+#openBar{display:flex;align-items:center;gap:8px;margin:12px 10px 0;padding:4px 4px 4px 14px;min-height:48px;border-radius:12px;background:#e3ecfd;color:#1b3d7a;font-size:14px}
+#openBar span{flex:1}
+#openBar button{min-height:40px;padding:0 12px;border-radius:10px;background:#fff;font-weight:600;font-size:14px}
+@media(min-width:700px){#openBar{max-width:420px;margin:16px 20px 0}}
 #toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#222a33;color:#fff;padding:10px 16px;border-radius:20px;z-index:60;font-size:14px;max-width:90%;text-align:center;pointer-events:none}
 #updBar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom));z-index:55;background:#222a33;color:#fff;border-radius:24px;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 16px;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;white-space:nowrap}
 #updBar button{background:var(--accent);color:#fff;border-radius:18px;height:36px;padding:0 14px;font-weight:600}
@@ -115,6 +119,7 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 <body>
 <div id="mainScr">
   <header class="top"><h1>Мои приложения</h1><button class="ibtn" id="menuBtn" data-ic="dots" aria-label="Меню"></button></header>
+  <div id="openBar" class="hidden"><span></span><button id="closeAll">Закрыть все</button></div>
   <button id="contBar" class="hidden"><img alt=""><span></span></button>
   <div id="grid"></div>
   <div id="emptyMsg" class="empty hidden"></div>
@@ -133,7 +138,9 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
   <div class="sec"><h2>Добавленные вручную</h2><div class="card" id="setManual"></div>
     <button class="btn block" id="setAdd">Добавить вручную</button></div>
   <div class="sec"><h2>Вкладки</h2><div class="card"><label class="chk"><input type="checkbox" id="setTabs"><span>Держать открытые приложения во вкладках</span></label></div>
-    <p class="note">Открытые приложения не перезагружаются при переключении. Полоска вверху: значки открытых приложений, ▦ — к плиткам, × — закрыть вкладку. Одновременно открыто не больше 4 — самое давнее закроется. Если выключить — приложение открывается вместо плиток, как раньше.</p></div>
+    <p class="note">Открытые приложения не перезагружаются при переключении: «Назад» с главного экрана приложения — к плиткам, касание плитки — снова в приложение. Открытые отмечены рамкой; закрыть — долгое нажатие на плитку → «Закрыть вкладку» или «Закрыть все». Одновременно открыто не больше 4 — самое давнее закроется. Если выключить — приложение открывается вместо плиток, как раньше.</p>
+    <div id="setBarBox"><p class="note">Полоска вкладок вверху (▦ — к плиткам, значки открытых, × — закрыть):</p>
+    <div class="seg" id="setBar"><button data-b="off">Не показывать</button><button data-b="multi">Когда 2 и больше</button><button data-b="always">Всегда</button></div></div></div>
   <div class="sec"><h2>Последнее приложение</h2><div class="card"><label class="chk"><input type="checkbox" id="setAuto"><span>Кнопка «Продолжить» с последним открытым приложением</span></label></div>
     <p class="note">Кнопка над плитками: одно касание — и вы в последнем приложении. «Назад» вернёт к плиткам.</p></div>
   <div class="sec"><h2>Меню по долгому нажатию на значок</h2>
@@ -154,13 +161,13 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 <div id="updBar" class="hidden"><span>Доступна новая версия</span><button id="updBtn">Обновить</button></div>
 <script>
 'use strict';
-const APP_VERSION='1.6',APP_DATE='15.11.2026';
+const APP_VERSION='1.7',APP_DATE='15.11.2026';
 const OWNER='mrtekhnik',PUB_HOST='mrtekhnik.github.io';
 const API=`https://api.github.com/users/${OWNER}/repos?per_page=100`;
 const EXCLUDE=['apps',PUB_HOST];
 const DB_NAME='apps_launcher',ICON_CACHE='apps-icons';
 const REFRESH_MS=10*60*1000;
-const LS={tabs:'apps.tabs',view:'apps.view',ver:'apps.verBadge',bk:'apps.bkRemind',bkDays:'apps.bkDays',last:'apps.last',auto:'apps.autoLast',tryAt:'apps.lastTry',okAt:'apps.lastOk',status:'apps.listStatus',opened:'apps.opened'};
+const LS={tabs:'apps.tabs',tabBar:'apps.tabBar',view:'apps.view',ver:'apps.verBadge',bk:'apps.bkRemind',bkDays:'apps.bkDays',last:'apps.last',auto:'apps.autoLast',tryAt:'apps.lastTry',okAt:'apps.lastOk',status:'apps.listStatus',opened:'apps.opened'};
 const $=s=>document.querySelector(s);
 const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v);}catch(e){}};
@@ -358,6 +365,8 @@ async function render(){
     if(!navigator.onLine&&!openedOffline(a))addMk(b.querySelector('.tx'),'off','не открывалось без сети');
     bindTile(b,id);g.appendChild(b);}
   decorate();
+  const ob=$('#openBar');ob.classList.toggle('hidden',!tabs.length);
+  if(tabs.length)ob.querySelector('span').textContent=`Открыто приложений: ${tabs.length}`;
   const cb=$('#contBar'),lastUrl=lsGet(LS.last),la=lsGet(LS.auto)==='1'&&lastUrl?ids.map(id=>apps.get(id)).find(a=>a.url===lastUrl):null;
   cb.classList.toggle('hidden',!la);
   if(la){cb.querySelector('span').textContent='Продолжить: '+(la.title||la.name);setImg(cb.querySelector('img'),la);cb.onclick=()=>openHere(la);}
@@ -387,7 +396,9 @@ function showTab(id){const t=tabs.find(x=>x.id===id);if(!t)return;activeTab=id;t
   const a=apps.get(id);if(a)lsSet(LS.last,a.url);
   try{t.frame.focus();t.frame.contentWindow.focus();}catch(e){}}
 function showTiles(){$('#tabScr').classList.add('hidden');$('#mainScr').classList.remove('hidden');activeTab=null;render();}
-function renderTabBar(){const l=$('#tabList');l.innerHTML='';
+const barMode=()=>{const m=lsGet(LS.tabBar);return m==='multi'||m==='always'?m:'off';};
+function renderTabBar(){const m=barMode();$('#tabBar').classList.toggle('hidden',!(m==='always'||(m==='multi'&&tabs.length>=2)));
+  const l=$('#tabList');l.innerHTML='';
   for(const t of tabs){const a=apps.get(t.id)||{title:t.id,name:t.id};const b=document.createElement('button');b.className='tab'+(t.id===activeTab?' on':'');b.dataset.id=t.id;
     b.innerHTML='<img alt=""><span></span>';b.querySelector('span').textContent=a.title||a.name;b.setAttribute('aria-label',a.title||a.name);setImg(b.querySelector('img'),a);
     b.onclick=()=>showTab(t.id);l.appendChild(b);}
@@ -402,6 +413,7 @@ async function closeTab(id,quiet){const i=tabs.findIndex(x=>x.id===id);if(i<0)re
   if(activeTab===id){const next=tabs.slice().sort((x,y)=>y.used-x.used)[0];if(next)showTab(next.id);else showTiles();}else renderTabBar();}
 async function closeAllTabs(){for(const t of tabs.slice())await closeTab(t.id,true);if(tabView())showTiles();}
 $('#tabHome').onclick=()=>showTiles();
+$('#closeAll').onclick=async()=>{await closeAllTabs();render();toast('Вкладки закрыты');};
 $('#tabClose').onclick=()=>{if(activeTab)closeTab(activeTab);};
 const isAndroid=/Android/i.test(navigator.userAgent);
 function intentUrl(url){const u=new URL(url);return `intent://${u.host}${u.pathname}${u.search}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url)};end`;}
@@ -425,8 +437,10 @@ async function tileMenu(id){if(modalClose)return;lastMenuAt=Date.now();const a=a
   const ids=visibleIds(),i=ids.indexOf(id);
   const opts=[{k:'here',l:'Открыть здесь'},{k:'tab',l:isAndroid?'Открыть во вкладке Chrome':'Открыть во вкладке браузера'},
     {k:'left',l:'← Переместить левее',dis:i<=0},{k:'right',l:'Переместить правее →',dis:i<0||i>=ids.length-1},{k:'hide',l:'Скрыть'}];
+  if(tabs.some(t=>t.id===id))opts.splice(1,0,{k:'close',l:'Закрыть вкладку'});
   if(a.manual)opts.push({k:'del',l:'Убрать из списка'});
   const k=await choose(a.title||a.name,a.url.replace(/^https?:\/\//,''),opts);
+  if(k==='close'){await closeTab(id,true);render();toast('Вкладка закрыта');return;}
   if(k==='here')openHere(a);else if(k==='tab')openInTab(a);
   else if(k==='left')await move(id,-1);else if(k==='right')await move(id,1);
   else if(k==='hide')await setHidden(id,true);else if(k==='del')await removeManual(id);}
@@ -470,7 +484,8 @@ function renderSettings(){if($('#setScr').classList.contains('hidden'))return;
   const m=$('#setManual');m.innerHTML='';const ms=order.filter(id=>apps.get(id)&&apps.get(id).manual);
   for(const id of ms){const r=rowEl(apps.get(id));const b=document.createElement('button');b.className='tb';b.textContent='Убрать';b.onclick=()=>removeManual(id);r.appendChild(b);m.appendChild(r);}
   if(!ms.length)m.appendChild(noneRow('Нет'));
-  $('#setAuto').checked=lsGet(LS.auto)==='1';$('#setTabs').checked=tabsOn();
+  $('#setAuto').checked=lsGet(LS.auto)==='1';$('#setTabs').checked=tabsOn();$('#setBarBox').classList.toggle('hidden',!tabsOn());
+  document.querySelectorAll('#setBar button').forEach(b=>b.classList.toggle('on',b.dataset.b===barMode()));
   document.querySelectorAll('#setView button').forEach(b=>b.classList.toggle('on',b.dataset.v===curView()));
   $('#setVer').checked=lsGet(LS.ver)!=='0';$('#setBk').checked=lsGet(LS.bk)!=='0';$('#setBkBox').classList.toggle('hidden',lsGet(LS.bk)==='0');
   const bd=String(+lsGet(LS.bkDays)||14);document.querySelectorAll('#setBkDays button').forEach(b=>b.classList.toggle('on',b.dataset.d===bd));
@@ -509,7 +524,8 @@ function closeSettingsView(){$('#setScr').classList.add('hidden');$('#mainScr').
 $('#setBack').onclick=()=>history.back();
 $('#setAdd').onclick=addManual;
 $('#setAuto').onchange=e=>lsSet(LS.auto,e.target.checked?'1':null);
-$('#setTabs').onchange=async e=>{lsSet(LS.tabs,e.target.checked?null:'0');if(!e.target.checked&&tabs.length){await closeAllTabs();toast('Вкладки закрыты');}};
+document.querySelectorAll('#setBar button').forEach(b=>b.onclick=()=>{lsSet(LS.tabBar,b.dataset.b==='off'?null:b.dataset.b);renderSettings();});
+$('#setTabs').onchange=async e=>{lsSet(LS.tabs,e.target.checked?null:'0');renderSettings();if(!e.target.checked&&tabs.length){await closeAllTabs();toast('Вкладки закрыты');}};
 document.querySelectorAll('#setView button').forEach(b=>b.onclick=()=>{lsSet(LS.view,b.dataset.v==='m'?null:b.dataset.v);renderSettings();});
 $('#setVer').onchange=e=>lsSet(LS.ver,e.target.checked?null:'0');
 $('#setBk').onchange=e=>{lsSet(LS.bk,e.target.checked?null:'0');renderSettings();};
