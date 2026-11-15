@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1d2733">
+<title>Мои приложения</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#f2f4f7;--card:#fff;--ink:#1b2430;--muted:#6b7686;--line:#d9dee5;--accent:#1f6feb;--danger:#d93a3a;--bar:#1d2733;--barInk:#e9eef5}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:16px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+button:disabled{opacity:.35;cursor:default}
+.hidden{display:none!important}
+svg.i{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+header.top{position:sticky;top:0;z-index:5;background:var(--bar);color:var(--barInk);display:flex;align-items:center;gap:4px;padding:6px 8px;min-height:56px;padding-top:calc(6px + env(safe-area-inset-top))}
+header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.ibtn{min-width:44px;height:44px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center}
+.ibtn:active:not(:disabled){background:rgba(255,255,255,.15)}
+/* плитки */
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:14px 6px;padding:16px 10px calc(24px + env(safe-area-inset-bottom))}
+@media(min-width:700px){#grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:20px 10px;padding:24px 20px}}
+.tile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 2px;border-radius:14px;min-height:44px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+.tile:active,.tile.press{background:rgba(31,111,235,.10)}
+.tile .ico{width:58px;height:58px;border-radius:14px;overflow:hidden;background:#dfe3e8;display:block;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+@media(min-width:700px){.tile .ico{width:68px;height:68px;border-radius:16px}}
+.tile img{width:100%;height:100%;display:block;object-fit:cover;pointer-events:none;-webkit-user-drag:none}
+.tile .nm{font-size:13px;line-height:1.25;text-align:center;max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
+.tile .off{font-size:11px;line-height:1.2;color:var(--danger);text-align:center}
+.empty{text-align:center;color:var(--muted);padding:40px 20px;white-space:pre-line}
+/* настройки */
+#setScr{min-height:100vh;background:var(--bg)}
+.sec{padding:4px 12px 8px}
+.sec h2{font-size:15px;color:var(--muted);font-weight:600;margin:18px 4px 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:8px;padding:4px 4px 4px 10px;min-height:52px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row img{width:32px;height:32px;border-radius:8px;flex:none}
+.row .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .sb{min-width:44px;height:44px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;color:var(--muted)}
+.row .sb:active:not(:disabled){background:#e8ecf1}
+.row .tb{min-height:40px;padding:0 12px;border-radius:10px;background:#e8ecf1;font-weight:600;font-size:14px}
+.row.none{color:var(--muted);font-size:14px}
+.note{font-size:13px;color:var(--muted);margin:8px 4px}
+.chk{display:flex;align-items:center;gap:12px;padding:12px;min-height:52px;cursor:pointer}
+.chk input{width:22px;height:22px;flex:none}
+/* окна */
+#ov{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:8vh 12px 12px;overflow:auto}
+#mbox{background:var(--card);border-radius:16px;width:min(440px,100%);padding:18px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+#mbox h3{margin:0 0 10px;font-size:18px;overflow-wrap:anywhere}
+.txt{margin:0 0 6px;white-space:pre-line}
+.inp{width:100%;height:50px;font:inherit;font-size:18px;border:1px solid var(--line);border-radius:10px;padding:0 12px;outline:none}
+.inp:focus{border-color:var(--accent)}
+.mbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.btn{min-height:46px;padding:0 18px;border-radius:10px;background:#e8ecf1;font-weight:600}
+.btn.pri{background:var(--accent);color:#fff}
+.btn.ghost{background:none;color:var(--muted)}
+.btn.block{display:block;width:100%;margin-top:8px}
+.mfoot{border-top:1px solid var(--line);margin-top:12px;padding-top:10px;font-size:12px;color:var(--muted);line-height:1.5}
+.mfoot .warn{color:var(--danger)}
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#222a33;color:#fff;padding:10px 16px;border-radius:20px;z-index:60;font-size:14px;max-width:90%;text-align:center;pointer-events:none}
+#updBar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom));z-index:55;background:#222a33;color:#fff;border-radius:24px;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 16px;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;white-space:nowrap}
+#updBar button{background:var(--accent);color:#fff;border-radius:18px;height:36px;padding:0 14px;font-weight:600}
+</style>
+</head>
+<body>
+<div id="mainScr">
+  <header class="top"><h1>Мои приложения</h1><button class="ibtn" id="menuBtn" data-ic="dots" aria-label="Меню"></button></header>
+  <div id="grid"></div>
+  <div id="emptyMsg" class="empty hidden"></div>
+</div>
+<div id="setScr" class="hidden">
+  <header class="top"><button class="ibtn" id="setBack" data-ic="back" aria-label="Назад"></button><h1>Настройки</h1></header>
+  <div class="sec"><h2>Порядок плиток</h2><div class="card" id="setOrder"></div></div>
+  <div class="sec"><h2>Скрытые приложения</h2><div class="card" id="setHidden"></div></div>
+  <div class="sec"><h2>Добавленные вручную</h2><div class="card" id="setManual"></div>
+    <button class="btn block" id="setAdd">Добавить вручную</button></div>
+  <div class="sec"><h2>Запуск</h2><div class="card"><label class="chk"><input type="checkbox" id="setAuto"><span>При запуске открывать последнее приложение</span></label></div>
+    <p class="note">Кнопка «Назад» на главном экране приложения всё равно вернёт к плиткам.</p></div>
+  <div class="sec"><h2>Меню по долгому нажатию на значок</h2><div class="card" id="setShort"></div>
+    <p class="note">Чтобы изменить — напишите в чат стартового приложения.</p></div>
+  <div class="sec" id="setFsSec"><h2>Экран</h2><button class="btn block" id="setFs">На весь экран</button>
+    <p class="note">Только когда приложение открыто во вкладке браузера.</p></div>
+  <div style="height:40px"></div>
+</div>
+<div id="ov" class="hidden"><div id="mbox"></div></div>
+<div id="toast" class="hidden"></div>
+<div id="updBar" class="hidden"><span>Доступна новая версия</span><button id="updBtn">Обновить</button></div>
+<script>
+'use strict';
+const APP_VERSION='1.0',APP_DATE='15.11.2026';
+const OWNER='mrtekhnik',PUB_HOST='mrtekhnik.github.io';
+const API=`https://api.github.com/users/${OWNER}/repos?per_page=100`;
+const EXCLUDE=['apps',PUB_HOST];
+const DB_NAME='apps_launcher',ICON_CACHE='apps-icons';
+const REFRESH_MS=10*60*1000;
+const LS={last:'apps.last',auto:'apps.autoLast',tryAt:'apps.lastTry',okAt:'apps.lastOk',status:'apps.listStatus',opened:'apps.opened'};
+const $=s=>document.querySelector(s);
+const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
+const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v);}catch(e){}};
+
+/* ---------- «При запуске открывать последнее приложение» — только при свежем запуске окна ---------- */
+(()=>{let first=false;try{first=!sessionStorage.getItem('apps.started');sessionStorage.setItem('apps.started','1');}catch(e){}
+  const nav=(performance.getEntriesByType&&performance.getEntriesByType('navigation')[0])||{};
+  const last=lsGet(LS.last);
+  if(first&&nav.type!=='back_forward'&&nav.type!=='reload'&&lsGet(LS.auto)==='1'&&last&&last.startsWith(location.origin+'/')){
+    document.documentElement.style.visibility='hidden';
+    // переход только после полной загрузки: иначе браузер заменит запись стартового, и «Назад» не вернёт к плиткам
+    const go=()=>setTimeout(()=>{location.href=last;},50);
+    if(document.readyState==='complete')go();else addEventListener('load',go,{once:true});
+    window.__autoOpening=true;}})();
+
+/* ---------- значки ---------- */
+const ICONS={dots:'M12 5h.01M12 12h.01M12 19h.01',back:'M15 18l-6-6 6-6',up:'M12 19V5M5 12l7-7 7 7',down:'M12 5v14M19 12l-7 7-7-7',hide:'M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 3.9M6.6 6.6C3.9 8.3 2 12 2 12s4 7 10 7a9.7 9.7 0 0 0 5.4-1.6'};
+const ic=n=>`<svg class="i" viewBox="0 0 24 24"><path d="${ICONS[n]}"/></svg>`;
+document.querySelectorAll('[data-ic]').forEach(b=>b.innerHTML=ic(b.dataset.ic));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function defIcon(title){const t=(title||'?').trim();const ch=(t.match(/[\p{L}\p{N}]/u)||['?'])[0].toUpperCase();
+  let h=0;for(const c of t)h=(h*31+c.codePointAt(0))>>>0;const hue=h%360;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" fill="hsl(${hue},45%,42%)"/><text x="48" y="64" font-family="Arial,sans-serif" font-size="48" font-weight="700" fill="#fff" text-anchor="middle">${esc(ch)}</text></svg>`);}
+const pad2=n=>String(n).padStart(2,'0');
+const fmtDate=ts=>{const d=new Date(+ts);return `${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;};
+let toastT=0;function toast(t,ms){const el=$('#toast');el.textContent=t;el.classList.remove('hidden');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.add('hidden'),ms||2600);}
+
+/* ---------- окна; системная «Назад» закрывает окно ---------- */
+let modalClose=null,modalOpenedAt=0,afterBack=null;
+function goBackThen(f){afterBack=f;history.back();setTimeout(()=>{if(afterBack===f){afterBack=null;f();}},500);}
+function modal(build){return new Promise(res=>{const ov=$('#ov'),box=$('#mbox');box.innerHTML='';ov.classList.remove('hidden');modalOpenedAt=Date.now();
+  history.pushState({m:1},'');
+  let done=false;const close=(v,fromPop)=>{if(done)return;done=true;ov.classList.add('hidden');box.innerHTML='';modalClose=null;
+    const r=v===undefined?null:v;if(fromPop)res(r);else goBackThen(()=>res(r));};
+  modalClose=close;build(box,close);});}
+$('#ov').addEventListener('click',e=>{if(e.target.id==='ov'&&modalClose&&Date.now()-modalOpenedAt>600)modalClose(null);});
+function choose(title,text,opts,foot){return modal((box,close)=>{
+  box.innerHTML='<h3></h3>'+(text?'<p class="txt"></p>':'');box.querySelector('h3').textContent=title;if(text)box.querySelector('.txt').textContent=text;
+  for(const o of opts){const b=document.createElement('button');b.className='btn block '+(o.cls||'');b.textContent=o.l;b.dataset.k=o.k;if(o.dis)b.disabled=true;b.onclick=()=>close(o.k);box.appendChild(b);}
+  const c=document.createElement('button');c.className='btn block ghost';c.textContent='Отмена';c.onclick=()=>close(null);box.appendChild(c);
+  if(foot){const f=document.createElement('div');f.className='mfoot';f.innerHTML=foot;box.appendChild(f);}});}
+function alertBox(title,text){return modal((box,close)=>{
+  box.innerHTML='<h3></h3><p class="txt"></p><div class="mbtns"><button class="btn pri">OK</button></div>';
+  box.querySelector('h3').textContent=title;box.querySelector('.txt').textContent=text;box.querySelector('.btn').onclick=()=>close(true);});}
+function askText(title,text,ph){return modal((box,close)=>{
+  box.innerHTML='<h3></h3><p class="txt"></p><input class="inp" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="url"><div class="mbtns"><button class="btn" data-a="c">Отмена</button><button class="btn pri" data-a="ok">Добавить</button></div>';
+  box.querySelector('h3').textContent=title;box.querySelector('.txt').textContent=text;const inp=box.querySelector('.inp');inp.placeholder=ph||'';
+  box.querySelector('[data-a=c]').onclick=()=>close(null);box.querySelector('[data-a=ok]').onclick=()=>close(inp.value);
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();close(inp.value);}});
+  setTimeout(()=>inp.focus(),50);});}
+
+/* ---------- хранилище: IndexedDB apps_launcher ---------- */
+let db=null;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);
+  r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('apps'))d.createObjectStore('apps',{keyPath:'id'});if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta',{keyPath:'k'});};
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+const tx=(st,mode,fn)=>new Promise((res,rej)=>{const t=db.transaction(st,mode);let out;const r=fn(t);if(r&&'onsuccess' in r)r.onsuccess=()=>{out=r.result;};t.oncomplete=()=>res(out);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error);});
+let apps=new Map(),order=[],hidden=new Set();
+async function loadAll(){const list=await tx('apps','readonly',t=>t.objectStore('apps').getAll());apps=new Map((list||[]).map(a=>[a.id,a]));
+  const meta=await tx('meta','readonly',t=>t.objectStore('meta').getAll());const m=Object.fromEntries((meta||[]).map(x=>[x.k,x.v]));
+  order=Array.isArray(m.order)?m.order:[];hidden=new Set(Array.isArray(m.hidden)?m.hidden:[]);normOrder();}
+function normOrder(){const seen=new Set();order=order.filter(id=>apps.has(id)&&!seen.has(id)&&seen.add(id));
+  const fresh=[...apps.values()].filter(a=>!seen.has(a.id)).sort((a,b)=>(a.title||a.name).localeCompare(b.title||b.name,'ru'));
+  order.push(...fresh.map(a=>a.id));for(const h of [...hidden])if(!apps.has(h))hidden.delete(h);}
+async function saveMeta(){normOrder();await tx('meta','readwrite',t=>{const s=t.objectStore('meta');s.put({k:'order',v:order});s.put({k:'hidden',v:[...hidden]});});}
+async function saveApps(){await tx('apps','readwrite',t=>{const s=t.objectStore('apps');s.clear();for(const a of apps.values())s.put(a);});await saveMeta();}
+
+/* ---------- иконки в своём кэше ---------- */
+const iconURLs=new Map();
+async function cacheIcon(url){if(!url||!('caches' in window))return;try{const r=await fetch(url,{cache:'no-cache'});if(r.ok){const c=await caches.open(ICON_CACHE);await c.put(url,r);const old=iconURLs.get(url);if(old&&old.startsWith('blob:'))URL.revokeObjectURL(old);iconURLs.delete(url);}}catch(e){}}
+async function pruneIcons(){if(!('caches' in window))return;try{const keep=new Set([...apps.values()].map(a=>a.icon).filter(Boolean));const c=await caches.open(ICON_CACHE);
+  for(const req of await c.keys())if(!keep.has(req.url))await c.delete(req);}catch(e){}}
+async function iconSrc(a){if(!a.icon)return defIcon(a.title||a.name);if(iconURLs.has(a.icon))return iconURLs.get(a.icon);
+  try{if('caches' in window){const c=await caches.open(ICON_CACHE);const r=await c.match(a.icon);if(r){const u=URL.createObjectURL(await r.blob());iconURLs.set(a.icon,u);return u;}}}catch(e){}
+  return navigator.onLine?a.icon:defIcon(a.title||a.name);}
+function setImg(img,a){img.src=defIcon(a.title||a.name);iconSrc(a).then(u=>{if(u!==img.src)img.src=u;});
+  img.onerror=()=>{img.onerror=null;img.src=defIcon(a.title||a.name);};}
+
+/* ---------- поиск приложений ---------- */
+const appUrl=name=>`${location.origin}/${name}/`;
+function pickIcon(icons,base){if(!Array.isArray(icons)||!icons.length)return '';
+  const sz=i=>{const m=String(i.sizes||'').match(/(\d+)x(\d+)/);return m?+m[1]:(String(i.sizes||'')==='any'?192:0);};
+  const any=icons.filter(i=>!i.purpose||String(i.purpose).split(/\s+/).includes('any'));const pool=any.length?any:icons;
+  const best=pool.slice().sort((a,b)=>{const da=Math.abs(sz(a)-192)+(sz(a)<192?1000:0),dbb=Math.abs(sz(b)-192)+(sz(b)<192?1000:0);return da-dbb;})[0];
+  try{return new URL(best.src,base).href;}catch(e){return '';}}
+async function probe(url){
+  const r=await fetch(url,{cache:'no-cache'});if(!r.ok){const e=new Error('http '+r.status);e.status=r.status;throw e;}
+  const base=r.url||url,doc=new DOMParser().parseFromString(await r.text(),'text/html');
+  let title=((doc.querySelector('title')||{}).textContent||'').trim(),icon='';
+  const ml=doc.querySelector('link[rel~="manifest" i]');
+  if(ml&&ml.getAttribute('href')){try{const mu=new URL(ml.getAttribute('href'),base).href;const mr=await fetch(mu,{cache:'no-cache'});
+    if(mr.ok){const m=await mr.json();title=String(m.name||m.short_name||title||'').trim();icon=pickIcon(m.icons,mu);}}catch(e){}}
+  return {title,icon};}
+let busy=false,listStatus=lsGet(LS.status)||'';
+function setStatus(s){listStatus=s;lsSet(LS.status,s);}
+function statusLine(){const ok=lsGet(LS.okAt);
+  if(listStatus==='limit')return '<span class="warn">Список не обновлён — лимит GitHub, попробуйте позже</span>';
+  if(listStatus==='offline')return '<span class="warn">Список не обновлён — нет связи</span>';
+  if(listStatus&&listStatus.startsWith('err'))return `<span class="warn">Список не обновлён — ошибка GitHub (${esc(listStatus.slice(4))})</span>`;
+  return ok?`Список обновлён: ${fmtDate(ok)}`:'Список ещё не загружался';}
+async function refreshList(manual){
+  if(busy){if(manual)toast('Список уже обновляется…');return;}busy=true;if(manual)toast('Обновляю список…',8000);
+  try{
+    lsSet(LS.tryAt,String(Date.now()));
+    let r;try{r=await fetch(API,{cache:'no-store',headers:{Accept:'application/vnd.github+json'}});}
+    catch(e){setStatus('offline');if(manual)toast('Нет связи — показан сохранённый список');return;}
+    if(r.status===403||r.status===429){setStatus('limit');if(manual)toast('Список не обновлён — лимит GitHub, попробуйте позже',4000);return;}
+    if(!r.ok){setStatus('err:'+r.status);if(manual)toast('Список не обновлён — ошибка GitHub ('+r.status+')');return;}
+    let repos;try{repos=await r.json();}catch(e){setStatus('err:json');return;}
+    if(!Array.isArray(repos)){setStatus('err:json');return;}
+    const found=repos.filter(x=>x&&x.has_pages===true&&x.archived!==true&&!EXCLUDE.includes(String(x.name).toLowerCase()));
+    const next=new Map();
+    for(const x of found){const id=x.name.toLowerCase(),old=apps.get(id);next.set(id,Object.assign({},old||{},{id,name:x.name,url:appUrl(x.name),manual:false}));}
+    for(const a of apps.values())if(a.manual&&!next.has(a.id))next.set(a.id,a);
+    await Promise.all([...next.values()].map(async a=>{
+      try{const p=await probe(a.url);a.title=p.title||a.title||a.name;a.icon=p.icon;if(p.icon)await cacheIcon(p.icon);}
+      catch(e){if(!a.title)a.title=a.name;if(a.icon===undefined)a.icon='';}}));
+    apps=next;await saveApps();await pruneIcons();setStatus('');lsSet(LS.okAt,String(Date.now()));
+    render();if(!$('#setScr').classList.contains('hidden'))renderSettings();
+    if(manual)toast(`Список обновлён: ${visibleIds().length} прил.`);
+  }finally{busy=false;}}
+function maybeRefresh(){if(!navigator.onLine)return;const t=+(lsGet(LS.tryAt)||0);if(Date.now()-t>=REFRESH_MS)refreshList(false);}
+
+/* ---------- главный экран ---------- */
+const visibleIds=()=>order.filter(id=>apps.has(id)&&!hidden.has(id));
+let swScopes=null;
+async function loadScopes(){try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations){swScopes=(await navigator.serviceWorker.getRegistrations()).map(r=>r.scope);return;}}catch(e){}swScopes=null;}
+function openedOffline(a){if(swScopes)return swScopes.some(s=>s!==location.origin+'/'&&!s.startsWith(location.origin+'/apps/')&&a.url.startsWith(s));
+  try{return JSON.parse(lsGet(LS.opened)||'[]').includes(a.id);}catch(e){return false;}}
+let loaded=false;
+async function render(){
+  const g=$('#grid'),em=$('#emptyMsg'),ids=visibleIds();
+  if(!navigator.onLine)await loadScopes();
+  g.innerHTML='';
+  for(const id of ids){const a=apps.get(id);const b=document.createElement('button');b.className='tile';b.dataset.id=id;
+    b.innerHTML=`<span class="ico"><img alt="" draggable="false"></span><span class="nm"></span>`;
+    b.querySelector('.nm').textContent=a.title||a.name;setImg(b.querySelector('img'),a);
+    if(!navigator.onLine&&!openedOffline(a)){const o=document.createElement('span');o.className='off';o.textContent='не открывалось без сети';b.appendChild(o);}
+    bindTile(b,id);g.appendChild(b);}
+  if(ids.length){em.classList.add('hidden');}
+  else{em.classList.remove('hidden');
+    em.textContent=!loaded?'Загрузка…':apps.size?'Все приложения скрыты.\nВернуть их можно в ⋮ → Настройки.':busy?'Загружаю список приложений…':'Список пуст.\nПодключитесь к интернету и нажмите ⋮ → Обновить список.';}}
+function openHere(a){lsSet(LS.last,a.url);
+  try{const s=new Set(JSON.parse(lsGet(LS.opened)||'[]'));s.add(a.id);lsSet(LS.opened,JSON.stringify([...s]));}catch(e){}
+  location.href=a.url;}
+const isAndroid=/Android/i.test(navigator.userAgent);
+function intentUrl(url){const u=new URL(url);return `intent://${u.host}${u.pathname}${u.search}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url)};end`;}
+function openInTab(a){if(isAndroid){location.href=intentUrl(a.url);return;}
+  const w=window.open(a.url,'_blank');if(!w)toast('Браузер не дал открыть вкладку');}
+// долгое нажатие ~500 мс (касание) или правая кнопка мыши — меню плитки
+let lastMenuAt=0;
+function bindTile(b,id){let t=0,sx=0,sy=0,fired=false;
+  const cancel=()=>{clearTimeout(t);t=0;b.classList.remove('press');};
+  b.addEventListener('pointerdown',e=>{fired=false;if(e.pointerType==='mouse'&&e.button!==0)return;if(e.pointerType==='mouse')return;
+    sx=e.clientX;sy=e.clientY;b.classList.add('press');t=setTimeout(()=>{t=0;fired=true;b.classList.remove('press');tileMenu(id);},500);});
+  b.addEventListener('pointermove',e=>{if(t&&Math.hypot(e.clientX-sx,e.clientY-sy)>10)cancel();});
+  b.addEventListener('pointerup',cancel);b.addEventListener('pointercancel',cancel);b.addEventListener('pointerleave',cancel);
+  b.addEventListener('contextmenu',e=>{e.preventDefault();cancel();if(fired||Date.now()-lastMenuAt<800)return;fired=true;tileMenu(id);});
+  b.addEventListener('click',e=>{if(fired){fired=false;e.preventDefault();return;}if(modalClose)return;const a=apps.get(id);if(a)openHere(a);});}
+async function tileMenu(id){if(modalClose)return;lastMenuAt=Date.now();const a=apps.get(id);if(!a)return;
+  const ids=visibleIds(),i=ids.indexOf(id);
+  const opts=[{k:'here',l:'Открыть здесь'},{k:'tab',l:isAndroid?'Открыть во вкладке Chrome':'Открыть во вкладке браузера'},
+    {k:'left',l:'← Переместить левее',dis:i<=0},{k:'right',l:'Переместить правее →',dis:i<0||i>=ids.length-1},{k:'hide',l:'Скрыть'}];
+  if(a.manual)opts.push({k:'del',l:'Убрать из списка'});
+  const k=await choose(a.title||a.name,a.url.replace(/^https?:\/\//,''),opts);
+  if(k==='here')openHere(a);else if(k==='tab')openInTab(a);
+  else if(k==='left')await move(id,-1);else if(k==='right')await move(id,1);
+  else if(k==='hide')await setHidden(id,true);else if(k==='del')await removeManual(id);}
+async function move(id,dir){const ids=visibleIds(),i=ids.indexOf(id),j=i+dir;if(i<0||j<0||j>=ids.length)return;
+  const oi=order.indexOf(id),oj=order.indexOf(ids[j]);[order[oi],order[oj]]=[order[oj],order[oi]];await saveMeta();render();renderSettings();}
+async function setHidden(id,h){if(h){hidden.add(id);const a=apps.get(id);if(a&&lsGet(LS.last)===a.url)lsSet(LS.last,null);}else hidden.delete(id);
+  await saveMeta();render();renderSettings();if(h)toast('Скрыто. Вернуть — ⋮ → Настройки');}
+async function removeManual(id){const a=apps.get(id);if(!a)return;apps.delete(id);hidden.delete(id);if(lsGet(LS.last)===a.url)lsSet(LS.last,null);
+  await saveApps();await pruneIcons();render();renderSettings();toast('Убрано из списка');}
+
+/* ---------- добавить вручную ---------- */
+function parseAddr(s){s=String(s||'').trim();if(!s)return null;if(!/^https?:\/\//i.test(s))s='https://'+s;let u;try{u=new URL(s);}catch(e){return {err:'Не похоже на адрес. Пример: mrtekhnik.github.io/razmery/'};}
+  const h=u.host.toLowerCase();if(h!==PUB_HOST&&h!==location.host.toLowerCase())return {err:'Можно добавить только приложение с адреса mrtekhnik.github.io'};
+  const seg=u.pathname.split('/').filter(Boolean)[0];if(!seg)return {err:'Укажите имя приложения: mrtekhnik.github.io/имя/'};
+  let name;try{name=decodeURIComponent(seg);}catch(e){name=seg;}
+  if(name.toLowerCase()==='apps')return {err:'Это само стартовое приложение'};
+  return {name,url:appUrl(encodeURIComponent(name))};}
+async function addManual(){
+  const v=await askText('Добавить вручную','Адрес приложения:','mrtekhnik.github.io/имя/');if(v==null)return;
+  const p=parseAddr(v);if(!p)return;if(p.err){await alertBox('Не добавлено',p.err);return;}
+  const id=p.name.toLowerCase(),ex=apps.get(id);
+  if(ex){if(hidden.has(id)){await setHidden(id,false);toast('Возвращено из скрытых');}else toast('Это приложение уже в списке');return;}
+  const a={id,name:p.name,url:p.url,manual:true,title:p.name,icon:''};
+  if(navigator.onLine){toast('Проверяю адрес…',8000);
+    try{const r=await probe(a.url);a.title=r.title||a.name;a.icon=r.icon;if(r.icon)await cacheIcon(r.icon);}
+    catch(e){if(e.status===404){toast('',1);await alertBox('Не добавлено','По этому адресу приложение не найдено (ошибка 404).');return;}}}
+  apps.set(id,a);order.push(id);await saveApps();render();renderSettings();toast(`Добавлено: ${a.title}`);}
+
+/* ---------- настройки ---------- */
+function rowEl(a){const r=document.createElement('div');r.className='row';r.innerHTML='<img alt=""><span class="t"></span>';r.querySelector('.t').textContent=a.title||a.name;setImg(r.querySelector('img'),a);return r;}
+const noneRow=t=>{const r=document.createElement('div');r.className='row none';r.textContent=t;return r;};
+function renderSettings(){if($('#setScr').classList.contains('hidden'))return;
+  const o=$('#setOrder'),ids=visibleIds();o.innerHTML='';
+  ids.forEach((id,i)=>{const a=apps.get(id),r=rowEl(a);
+    const mk=(n,lab,dis,fn)=>{const b=document.createElement('button');b.className='sb';b.innerHTML=ic(n);b.setAttribute('aria-label',lab);b.disabled=dis;b.onclick=fn;r.appendChild(b);};
+    mk('up','Выше',i===0,()=>move(id,-1));mk('down','Ниже',i===ids.length-1,()=>move(id,1));mk('hide','Скрыть',false,()=>setHidden(id,true));o.appendChild(r);});
+  if(!ids.length)o.appendChild(noneRow('Нет видимых приложений'));
+  const h=$('#setHidden');h.innerHTML='';const hs=order.filter(id=>hidden.has(id)&&apps.has(id));
+  for(const id of hs){const r=rowEl(apps.get(id));const b=document.createElement('button');b.className='tb';b.textContent='Вернуть';b.onclick=()=>setHidden(id,false);r.appendChild(b);h.appendChild(r);}
+  if(!hs.length)h.appendChild(noneRow('Скрытых нет'));
+  const m=$('#setManual');m.innerHTML='';const ms=order.filter(id=>apps.get(id)&&apps.get(id).manual);
+  for(const id of ms){const r=rowEl(apps.get(id));const b=document.createElement('button');b.className='tb';b.textContent='Убрать';b.onclick=()=>removeManual(id);r.appendChild(b);m.appendChild(r);}
+  if(!ms.length)m.appendChild(noneRow('Нет'));
+  $('#setAuto').checked=lsGet(LS.auto)==='1';
+  $('#setFsSec').classList.toggle('hidden',!fsCan());$('#setFs').textContent=fsOn()?'Выйти из полноэкранного режима':'На весь экран';
+  renderShortcuts();}
+async function renderShortcuts(){const s=$('#setShort');
+  try{const r=await fetch('manifest.webmanifest');const m=await r.json();const sc=Array.isArray(m.shortcuts)?m.shortcuts:[];s.innerHTML='';
+    for(const x of sc){const url=new URL(x.url,r.url||location.href).href,id=Object.keys(Object.fromEntries(apps)).find(k=>apps.get(k).url===url);
+      const a=id?apps.get(id):{title:x.name,name:x.name,icon:x.icons&&x.icons[0]?new URL(x.icons[0].src,r.url||location.href).href:''};s.appendChild(rowEl(a));}
+    if(!sc.length)s.appendChild(noneRow('Пусто'));}
+  catch(e){s.innerHTML='';s.appendChild(noneRow('Не удалось прочитать'));}}
+function openSettings(){history.pushState({s:1},'');$('#mainScr').classList.add('hidden');$('#setScr').classList.remove('hidden');window.scrollTo(0,0);renderSettings();}
+function closeSettingsView(){$('#setScr').classList.add('hidden');$('#mainScr').classList.remove('hidden');render();}
+$('#setBack').onclick=()=>history.back();
+$('#setAdd').onclick=addManual;
+$('#setAuto').onchange=e=>lsSet(LS.auto,e.target.checked?'1':null);
+$('#setFs').onclick=async()=>{await toggleFull();renderSettings();};
+window.addEventListener('popstate',()=>{
+  if(afterBack){const f=afterBack;afterBack=null;f();return;}
+  if(modalClose){modalClose(null,true);return;}
+  if(!$('#setScr').classList.contains('hidden'))closeSettingsView();});
+
+/* ---------- «На весь экран» — только когда открыто во вкладке браузера (как в «Размеры на фото» 1.47) ---------- */
+const inTab=()=>!(matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: minimal-ui)').matches||navigator.standalone);
+const fsOn=()=>!!document.fullscreenElement,fsCan=()=>!!document.fullscreenEnabled&&(inTab()||fsOn());
+async function toggleFull(){try{if(fsOn()){fsWant=false;fsHidden=false;await document.exitFullscreen();}else await document.documentElement.requestFullscreen({navigationUI:'hide'});}
+  catch(e){toast('Браузер не разрешил полноэкранный режим');}}
+function updFull(){renderSettings();}
+// если режим выключила система (ушли в другое окно), а не пользователь — вернуть его первым касанием после возврата
+let fsWant=false,fsHidden=false;
+document.addEventListener('fullscreenchange',()=>{updFull();if(fsOn()){fsWant=true;fsHidden=false;}else if(!document.hidden&&!fsHidden)fsWant=false;});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(fsWant)fsHidden=true;}else if(fsWant&&!fsOn())armFull();});
+function armFull(){const h=()=>{document.removeEventListener('pointerup',h,true);document.removeEventListener('keydown',h,true);
+    if(fsWant&&!fsOn()&&!document.hidden)document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{});};
+  document.addEventListener('pointerup',h,true);document.addEventListener('keydown',h,true);}
+
+/* ---------- меню ---------- */
+$('#menuBtn').onclick=async()=>{
+  const k=await choose('Меню','',[...(fsCan()?[{k:'fs',l:fsOn()?'Выйти из полноэкранного режима':'На весь экран'}]:[]),{k:'rf',l:'Обновить список'},{k:'add',l:'Добавить вручную'},{k:'st',l:'Настройки'},{k:'up',l:'Проверить обновления'}],
+    `Версия ${APP_VERSION} от ${APP_DATE}<br>${statusLine()}`);
+  if(k==='fs')toggleFull();else if(k==='rf')refreshList(true);else if(k==='add')addManual();else if(k==='st')openSettings();else if(k==='up')checkUpdate();};
+
+window.addEventListener('online',()=>{render();maybeRefresh();});
+window.addEventListener('offline',()=>render());
+window.addEventListener('pageshow',e=>{if(!e.persisted)return;
+  // вернулись «Назад» из приложения, открытого при запуске: страница восстановлена из памяти браузера
+  if(window.__autoOpening){window.__autoOpening=false;document.documentElement.style.visibility='';start();return;}
+  if(loaded)loadScopes().then(render);});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&loaded)maybeRefresh();});
+
+async function start(){
+  try{db=await openDB();await loadAll();}catch(e){loaded=true;render();alertBox('Хранилище недоступно','Браузер не дал доступ к IndexedDB. Список приложений не сможет сохраняться.');return;}
+  loaded=true;await loadScopes();render();
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
+  if(navigator.onLine&&(!apps.size||Date.now()-+(lsGet(LS.tryAt)||0)>=REFRESH_MS)){const p=refreshList(false);if(!apps.size)render();await p;}
+}
+if(!window.__autoOpening)start();
+
+/* ---------- обновление приложения ---------- */
+let swReg=null;
+const showUpd=()=>$('#updBar').classList.remove('hidden');
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
+  const hadCtrl=!!navigator.serviceWorker.controller;let reloading=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!hadCtrl||reloading)return;reloading=true;location.reload();});
+  navigator.serviceWorker.register('sw.js').then(reg=>{swReg=reg;
+    if(reg.waiting&&navigator.serviceWorker.controller)showUpd();
+    reg.addEventListener('updatefound',()=>{const w=reg.installing;if(!w)return;
+      w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller)showUpd();});});
+  }).catch(()=>{});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&swReg)swReg.update().catch(()=>{});});
+}
+async function checkUpdate(){
+  if(!swReg){toast('Обновления доступны только в установленной версии');return;}
+  if(swReg.waiting){showUpd();return;}
+  toast('Проверка…');try{await swReg.update();}catch(e){toast('Нет связи с сервером');return;}
+  setTimeout(()=>{if(swReg.waiting||swReg.installing)showUpd();else toast(`Установлена последняя версия (${APP_VERSION})`);},1500);}
+$('#updBtn').onclick=()=>{const w=swReg&&swReg.waiting;if(w)w.postMessage('SKIP_WAITING');else location.reload();};
+</script>
+</body>
+</html>
