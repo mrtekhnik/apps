@@ -31,6 +31,11 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 .tile .nm{font-size:13px;line-height:1.25;text-align:center;max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
 .tile .off{font-size:11px;line-height:1.2;color:var(--danger);text-align:center}
 .empty{text-align:center;color:var(--muted);padding:40px 20px;white-space:pre-line}
+#contBar{display:flex;align-items:center;gap:12px;width:calc(100% - 20px);margin:12px 10px 0;min-height:56px;padding:8px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-weight:600;text-align:left}
+#contBar:active{background:#e8ecf1}
+#contBar img{width:36px;height:36px;border-radius:9px;flex:none}
+#contBar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(min-width:700px){#contBar{width:auto;max-width:420px;margin:16px 20px 0}}
 /* настройки */
 #setScr{min-height:100vh;background:var(--bg)}
 .sec{padding:4px 12px 8px}
@@ -69,6 +74,7 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 <body>
 <div id="mainScr">
   <header class="top"><h1>Мои приложения</h1><button class="ibtn" id="menuBtn" data-ic="dots" aria-label="Меню"></button></header>
+  <button id="contBar" class="hidden"><img alt=""><span></span></button>
   <div id="grid"></div>
   <div id="emptyMsg" class="empty hidden"></div>
 </div>
@@ -78,8 +84,8 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
   <div class="sec"><h2>Скрытые приложения</h2><div class="card" id="setHidden"></div></div>
   <div class="sec"><h2>Добавленные вручную</h2><div class="card" id="setManual"></div>
     <button class="btn block" id="setAdd">Добавить вручную</button></div>
-  <div class="sec"><h2>Запуск</h2><div class="card"><label class="chk"><input type="checkbox" id="setAuto"><span>При запуске открывать последнее приложение</span></label></div>
-    <p class="note">Кнопка «Назад» на главном экране приложения всё равно вернёт к плиткам.</p></div>
+  <div class="sec"><h2>Последнее приложение</h2><div class="card"><label class="chk"><input type="checkbox" id="setAuto"><span>Кнопка «Продолжить» с последним открытым приложением</span></label></div>
+    <p class="note">Кнопка над плитками: одно касание — и вы в последнем приложении. «Назад» вернёт к плиткам.</p></div>
   <div class="sec"><h2>Меню по долгому нажатию на значок</h2>
     <p class="note">Сейчас в меню:</p><div class="card" id="setShort"></div>
     <p class="note">Выберите до 4 приложений (порядок — как у плиток):</p><div class="card" id="setPick"></div>
@@ -94,7 +100,7 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 <div id="updBar" class="hidden"><span>Доступна новая версия</span><button id="updBtn">Обновить</button></div>
 <script>
 'use strict';
-const APP_VERSION='1.2',APP_DATE='15.11.2026';
+const APP_VERSION='1.3',APP_DATE='15.11.2026';
 const OWNER='mrtekhnik',PUB_HOST='mrtekhnik.github.io';
 const API=`https://api.github.com/users/${OWNER}/repos?per_page=100`;
 const EXCLUDE=['apps',PUB_HOST];
@@ -104,17 +110,6 @@ const LS={last:'apps.last',auto:'apps.autoLast',tryAt:'apps.lastTry',okAt:'apps.
 const $=s=>document.querySelector(s);
 const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v);}catch(e){}};
-
-/* ---------- «При запуске открывать последнее приложение» — только при свежем запуске окна ---------- */
-(()=>{let first=false;try{first=!sessionStorage.getItem('apps.started');sessionStorage.setItem('apps.started','1');}catch(e){}
-  const nav=(performance.getEntriesByType&&performance.getEntriesByType('navigation')[0])||{};
-  const last=lsGet(LS.last);
-  if(first&&nav.type!=='back_forward'&&nav.type!=='reload'&&lsGet(LS.auto)==='1'&&last&&last.startsWith(location.origin+'/')){
-    document.documentElement.style.visibility='hidden';
-    // переход только после полной загрузки: иначе браузер заменит запись стартового, и «Назад» не вернёт к плиткам
-    const go=()=>setTimeout(()=>{location.href=last;},50);
-    if(document.readyState==='complete')go();else addEventListener('load',go,{once:true});
-    window.__autoOpening=true;}})();
 
 /* ---------- значки ---------- */
 const ICONS={dots:'M12 5h.01M12 12h.01M12 19h.01',back:'M15 18l-6-6 6-6',up:'M12 19V5M5 12l7-7 7 7',down:'M12 5v14M19 12l-7 7-7-7',hide:'M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 3.9M6.6 6.6C3.9 8.3 2 12 2 12s4 7 10 7a9.7 9.7 0 0 0 5.4-1.6'};
@@ -240,6 +235,9 @@ async function render(){
     b.querySelector('.nm').textContent=a.title||a.name;setImg(b.querySelector('img'),a);
     if(!navigator.onLine&&!openedOffline(a)){const o=document.createElement('span');o.className='off';o.textContent='не открывалось без сети';b.appendChild(o);}
     bindTile(b,id);g.appendChild(b);}
+  const cb=$('#contBar'),lastUrl=lsGet(LS.last),la=lsGet(LS.auto)==='1'&&lastUrl?ids.map(id=>apps.get(id)).find(a=>a.url===lastUrl):null;
+  cb.classList.toggle('hidden',!la);
+  if(la){cb.querySelector('span').textContent='Продолжить: '+(la.title||la.name);setImg(cb.querySelector('img'),la);cb.onclick=()=>openHere(la);}
   if(ids.length){em.classList.add('hidden');}
   else{em.classList.remove('hidden');
     em.textContent=!loaded?'Загрузка…':apps.size?'Все приложения скрыты.\nВернуть их можно в ⋮ → Настройки.':busy?'Загружаю список приложений…':'Список пуст.\nПодключитесь к интернету и нажмите ⋮ → Обновить список.';}}
@@ -373,10 +371,7 @@ $('#menuBtn').onclick=async()=>{
 
 window.addEventListener('online',()=>{render();maybeRefresh();});
 window.addEventListener('offline',()=>render());
-window.addEventListener('pageshow',e=>{if(!e.persisted)return;
-  // вернулись «Назад» из приложения, открытого при запуске: страница восстановлена из памяти браузера
-  if(window.__autoOpening){window.__autoOpening=false;document.documentElement.style.visibility='';start();return;}
-  if(loaded)loadScopes().then(render);});
+window.addEventListener('pageshow',e=>{if(e.persisted&&loaded)loadScopes().then(render);});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&loaded)maybeRefresh();});
 
 async function start(){
@@ -385,7 +380,7 @@ async function start(){
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
   if(navigator.onLine&&(!apps.size||Date.now()-+(lsGet(LS.tryAt)||0)>=REFRESH_MS)){const p=refreshList(false);if(!apps.size)render();await p;}
 }
-if(!window.__autoOpening)start();
+start();
 
 /* ---------- обновление приложения ---------- */
 let swReg=null;
