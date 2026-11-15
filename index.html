@@ -91,7 +91,7 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 <div id="updBar" class="hidden"><span>Доступна новая версия</span><button id="updBtn">Обновить</button></div>
 <script>
 'use strict';
-const APP_VERSION='1.0',APP_DATE='15.11.2026';
+const APP_VERSION='1.1',APP_DATE='15.11.2026';
 const OWNER='mrtekhnik',PUB_HOST='mrtekhnik.github.io';
 const API=`https://api.github.com/users/${OWNER}/repos?per_page=100`;
 const EXCLUDE=['apps',PUB_HOST];
@@ -115,7 +115,7 @@ const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(
 
 /* ---------- значки ---------- */
 const ICONS={dots:'M12 5h.01M12 12h.01M12 19h.01',back:'M15 18l-6-6 6-6',up:'M12 19V5M5 12l7-7 7 7',down:'M12 5v14M19 12l-7 7-7-7',hide:'M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 3.9M6.6 6.6C3.9 8.3 2 12 2 12s4 7 10 7a9.7 9.7 0 0 0 5.4-1.6'};
-const ic=n=>`<svg class="i" viewBox="0 0 24 24"><path d="${ICONS[n]}"/></svg>`;
+const ic=n=>n==='dots'?'<svg class="i" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>':`<svg class="i" viewBox="0 0 24 24"><path d="${ICONS[n]}"/></svg>`;
 document.querySelectorAll('[data-ic]').forEach(b=>b.innerHTML=ic(b.dataset.ic));
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function defIcon(title){const t=(title||'?').trim();const ch=(t.match(/[\p{L}\p{N}]/u)||['?'])[0].toUpperCase();

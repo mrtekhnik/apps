@@ -35,12 +35,48 @@
   ],
   "shortcuts": [
     {
-      "name": "Размеры на фото",
-      "short_name": "Размеры",
-      "url": "/razmery/",
+      "name": "Личные накопления",
+      "short_name": "Накопления",
+      "url": "/finance/",
       "icons": [
         {
-          "src": "/razmery/icon-192.png",
+          "src": "/finance/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Мои шаблоны",
+      "short_name": "Шаблоны",
+      "url": "/templates/",
+      "icons": [
+        {
+          "src": "/templates/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Моя техническая база",
+      "short_name": "Тех. база",
+      "url": "/tech-base/",
+      "icons": [
+        {
+          "src": "/tech-base/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Просмотр DXF и PDF",
+      "short_name": "DXF просмотр",
+      "url": "/dxf-viewer/",
+      "icons": [
+        {
+          "src": "/dxf-viewer/icon-192.png",
           "sizes": "192x192",
           "type": "image/png"
         }
