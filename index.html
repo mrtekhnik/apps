@@ -80,8 +80,11 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
     <button class="btn block" id="setAdd">Добавить вручную</button></div>
   <div class="sec"><h2>Запуск</h2><div class="card"><label class="chk"><input type="checkbox" id="setAuto"><span>При запуске открывать последнее приложение</span></label></div>
     <p class="note">Кнопка «Назад» на главном экране приложения всё равно вернёт к плиткам.</p></div>
-  <div class="sec"><h2>Меню по долгому нажатию на значок</h2><div class="card" id="setShort"></div>
-    <p class="note">Чтобы изменить — напишите в чат стартового приложения.</p></div>
+  <div class="sec"><h2>Меню по долгому нажатию на значок</h2>
+    <p class="note">Сейчас в меню:</p><div class="card" id="setShort"></div>
+    <p class="note">Выберите до 4 приложений (порядок — как у плиток):</p><div class="card" id="setPick"></div>
+    <button class="btn block pri" id="setCopy">Скопировать запрос</button>
+    <p class="note">Меню значка хранится в файле на сервере, на устройстве его не поменять. Вставьте скопированный запрос в чат стартового приложения — после публикации меню обновится (Android может обновить его с задержкой до суток).</p></div>
   <div class="sec" id="setFsSec"><h2>Экран</h2><button class="btn block" id="setFs">На весь экран</button>
     <p class="note">Только когда приложение открыто во вкладке браузера.</p></div>
   <div style="height:40px"></div>
@@ -91,7 +94,7 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 <div id="updBar" class="hidden"><span>Доступна новая версия</span><button id="updBtn">Обновить</button></div>
 <script>
 'use strict';
-const APP_VERSION='1.1',APP_DATE='15.11.2026';
+const APP_VERSION='1.2',APP_DATE='15.11.2026';
 const OWNER='mrtekhnik',PUB_HOST='mrtekhnik.github.io';
 const API=`https://api.github.com/users/${OWNER}/repos?per_page=100`;
 const EXCLUDE=['apps',PUB_HOST];
@@ -309,12 +312,34 @@ function renderSettings(){if($('#setScr').classList.contains('hidden'))return;
   $('#setAuto').checked=lsGet(LS.auto)==='1';
   $('#setFsSec').classList.toggle('hidden',!fsCan());$('#setFs').textContent=fsOn()?'Выйти из полноэкранного режима':'На весь экран';
   renderShortcuts();}
+let shortNow=[],shortPick=null;
+async function loadShortNow(){try{const r=await fetch('manifest.webmanifest');const m=await r.json();const base=r.url||location.href;
+  shortNow=(Array.isArray(m.shortcuts)?m.shortcuts:[]).map(x=>({url:new URL(x.url,base).href,title:x.name,icon:x.icons&&x.icons[0]?new URL(x.icons[0].src,base).href:''}));return true;}catch(e){shortNow=null;return false;}}
 async function renderShortcuts(){const s=$('#setShort');
-  try{const r=await fetch('manifest.webmanifest');const m=await r.json();const sc=Array.isArray(m.shortcuts)?m.shortcuts:[];s.innerHTML='';
-    for(const x of sc){const url=new URL(x.url,r.url||location.href).href,id=Object.keys(Object.fromEntries(apps)).find(k=>apps.get(k).url===url);
-      const a=id?apps.get(id):{title:x.name,name:x.name,icon:x.icons&&x.icons[0]?new URL(x.icons[0].src,r.url||location.href).href:''};s.appendChild(rowEl(a));}
-    if(!sc.length)s.appendChild(noneRow('Пусто'));}
-  catch(e){s.innerHTML='';s.appendChild(noneRow('Не удалось прочитать'));}}
+  if(!shortNow||!shortNow.length)await loadShortNow();
+  s.innerHTML='';
+  if(!shortNow)s.appendChild(noneRow('Не удалось прочитать'));
+  else{for(const x of shortNow){const a=[...apps.values()].find(z=>z.url===x.url)||{title:x.title,name:x.title,icon:x.icon};s.appendChild(rowEl(a));}
+    if(!shortNow.length)s.appendChild(noneRow('Пусто'));}
+  if(shortPick===null){const saved=await tx('meta','readonly',t=>t.objectStore('meta').get('shortPick')).catch(()=>null);
+    shortPick=saved&&Array.isArray(saved.v)?saved.v:(shortNow||[]).map(x=>{const a=[...apps.values()].find(z=>z.url===x.url);return a&&a.id;}).filter(Boolean);}
+  const ids=order.filter(id=>apps.has(id)&&(!hidden.has(id)||shortPick.includes(id)));
+  shortPick=shortPick.filter(id=>apps.has(id));
+  const pk=$('#setPick');pk.innerHTML='';
+  for(const id of ids){const a=apps.get(id),r=document.createElement('label');r.className='row';r.style.cursor='pointer';
+    r.innerHTML='<input type="checkbox" style="width:22px;height:22px;flex:none;margin:0 4px 0 2px"><img alt=""><span class="t"></span>';
+    r.querySelector('.t').textContent=a.title||a.name;setImg(r.querySelector('img'),a);
+    const cb=r.querySelector('input');cb.dataset.id=id;cb.checked=shortPick.includes(id);cb.disabled=!cb.checked&&shortPick.length>=4;
+    cb.onchange=async()=>{if(cb.checked){if(shortPick.length>=4){cb.checked=false;toast('Не больше 4 приложений');return;}shortPick.push(id);}else shortPick=shortPick.filter(x=>x!==id);
+      await tx('meta','readwrite',t=>t.objectStore('meta').put({k:'shortPick',v:shortPick}));renderShortcuts();};
+    pk.appendChild(r);}
+  if(!ids.length)pk.appendChild(noneRow('Нет приложений'));
+  $('#setCopy').disabled=!shortPick.length;}
+function shortRequest(){const ids=order.filter(id=>shortPick&&shortPick.includes(id)&&apps.has(id));
+  return 'Поставь в меню значка «Мои приложения» (по порядку):\n'+ids.map((id,i)=>{const a=apps.get(id);return `${i+1}. ${a.title||a.name} — ${PUB_HOST}/${a.name}/`;}).join('\n');}
+$('#setCopy').onclick=async()=>{const t=shortRequest();
+  try{await navigator.clipboard.writeText(t);toast('Скопировано — вставьте в чат стартового приложения',3500);}
+  catch(e){await alertBox('Скопируйте запрос вручную',t);}};
 function openSettings(){history.pushState({s:1},'');$('#mainScr').classList.add('hidden');$('#setScr').classList.remove('hidden');window.scrollTo(0,0);renderSettings();}
 function closeSettingsView(){$('#setScr').classList.add('hidden');$('#mainScr').classList.remove('hidden');render();}
 $('#setBack').onclick=()=>history.back();

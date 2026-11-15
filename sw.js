@@ -3,7 +3,7 @@
 // Сервис-воркер управляет только /apps/. Запросы к другим приложениям (/razmery/ и т. д.) и к api.github.com
 // не перехватываются: их обслуживает сеть или сервис-воркеры самих приложений.
 // Удаляются только свои старые кэши (apps-*). Кэш иконок apps-icons не трогается при обновлении.
-const VERSION = '1.1';
+const VERSION = '1.2';
 const CACHE = 'apps-' + VERSION;
 const ICON_CACHE = 'apps-icons';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable.png'];
