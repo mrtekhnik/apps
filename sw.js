@@ -2,8 +2,9 @@
 // ВАЖНО: при каждом обновлении увеличивать VERSION — по этому изменению телефон узнаёт о новой версии.
 // Сервис-воркер управляет только /apps/. Запросы к другим приложениям (/razmery/ и т. д.) и к api.github.com
 // не перехватываются: их обслуживает сеть или сервис-воркеры самих приложений.
-// Удаляются только свои старые кэши (apps-*). Кэш иконок apps-icons не трогается при обновлении.
-const VERSION = '1.3';
+// Удаляются только свои старые кэши (apps-*). Иконки с версии 1.4 хранятся в IndexedDB; старый кэш apps-icons переносит и удаляет сама страница.
+// Если свой кэш удалён чужим сервис-воркером, файлы при первой загрузке с сетью кладутся в кэш заново.
+const VERSION = '1.4';
 const CACHE = 'apps-' + VERSION;
 const ICON_CACHE = 'apps-icons';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable.png'];
@@ -38,7 +39,11 @@ self.addEventListener('fetch', e => {
       let hit = await cache.match(nav ? './index.html' : req, {ignoreSearch: true});
       if (!hit) hit = await caches.match(nav ? new URL('./index.html', self.registration.scope).href : req, {ignoreSearch: true});
       if (hit) return hit;
-      return await fetch(req);
+      // кэш мог удалить чужой сервис-воркер — восстановить свою копию из сети
+      const res = await fetch(req);
+      if (res.ok && (nav || FILES.some(f => new URL(f, self.registration.scope).href === u.origin + u.pathname)))
+        cache.put(nav ? './index.html' : req, res.clone()).catch(() => {});
+      return res;
     } catch (_) {
       if (!nav) return new Response('', {status: 503});
       return new Response(OFFLINE_PAGE, {status: 503, headers: {'Content-Type': 'text/html; charset=utf-8'}});

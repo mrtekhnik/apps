@@ -29,7 +29,33 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 @media(min-width:700px){.tile .ico{width:68px;height:68px;border-radius:16px}}
 .tile img{width:100%;height:100%;display:block;object-fit:cover;pointer-events:none;-webkit-user-drag:none}
 .tile .nm{font-size:13px;line-height:1.25;text-align:center;max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
-.tile .off{font-size:11px;line-height:1.2;color:var(--danger);text-align:center}
+.tile .tx{display:flex;flex-direction:column;align-items:center;gap:2px;max-width:100%;min-width:0}
+.tile .mk{font-size:11px;line-height:1.2;text-align:center}
+.tile .off{color:var(--danger)}
+.tile .upd{color:var(--accent);font-weight:600}
+.tile .bk{color:#b45f00}
+#grid.v-l{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
+#grid.v-l .tile .ico{width:76px;height:76px;border-radius:18px}
+#grid.v-l .tile .nm{font-size:14px}
+#grid.v-s{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:10px 4px}
+#grid.v-s .tile .ico{width:44px;height:44px;border-radius:11px}
+#grid.v-s .tile .nm{font-size:11px}
+#grid.v-list{grid-template-columns:1fr;gap:2px;padding:8px 10px 24px}
+@media(min-width:700px){#grid.v-list{max-width:680px}}
+#grid.v-list .tile{flex-direction:row;align-items:center;gap:12px;padding:6px 8px;min-height:56px;border-radius:12px}
+#grid.v-list .tile .ico{width:44px;height:44px;border-radius:11px}
+#grid.v-list .tile .tx{align-items:flex-start;flex:1}
+#grid.v-list .tile .nm{font-size:16px;text-align:left;-webkit-line-clamp:1}
+#grid.v-list .tile .mk{text-align:left;font-size:12px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.seg button{flex:1;min-height:44px;font-weight:600;font-size:14px;padding:0 4px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--accent);color:#fff}
+.stor{margin-top:6px}
+.stor .r{display:flex;gap:8px;justify-content:space-between;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)}
+.stor .r .n{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.stor .r .v{font-weight:600;white-space:nowrap}
+.stor .r small{display:block;color:var(--muted);font-size:12px}
 .empty{text-align:center;color:var(--muted);padding:40px 20px;white-space:pre-line}
 #contBar{display:flex;align-items:center;gap:12px;width:calc(100% - 20px);margin:12px 10px 0;min-height:56px;padding:8px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-weight:600;text-align:left}
 #contBar:active{background:#e8ecf1}
@@ -81,6 +107,13 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 <div id="setScr" class="hidden">
   <header class="top"><button class="ibtn" id="setBack" data-ic="back" aria-label="Назад"></button><h1>Настройки</h1></header>
   <div class="sec"><h2>Порядок плиток</h2><div class="card" id="setOrder"></div></div>
+  <div class="sec"><h2>Вид плиток</h2><div class="seg" id="setView"><button data-v="l">Крупные</button><button data-v="m">Обычные</button><button data-v="s">Мелкие</button><button data-v="list">Список</button></div></div>
+  <div class="sec"><h2>Метки на плитках</h2><div class="card">
+    <label class="chk"><input type="checkbox" id="setVer"><span>«Новая версия» — на сервере есть обновление приложения</span></label>
+    <label class="chk" style="border-top:1px solid var(--line)"><input type="checkbox" id="setBk"><span>Напоминание о резервной копии</span></label></div>
+    <div id="setBkBox"><p class="note">Напоминать, если копии ещё не было или последняя копия (или синхронизация) старше:</p>
+    <div class="seg" id="setBkDays"><button data-d="7">7 дней</button><button data-d="14">14 дней</button><button data-d="30">30 дней</button></div>
+    <p class="note">Учитываются приложения с резервной копией: Размеры на фото, Мои шаблоны, Моя техническая база, Личные накопления, Учёт квартиры. Данные приложений только читаются.</p></div></div>
   <div class="sec"><h2>Скрытые приложения</h2><div class="card" id="setHidden"></div></div>
   <div class="sec"><h2>Добавленные вручную</h2><div class="card" id="setManual"></div>
     <button class="btn block" id="setAdd">Добавить вручную</button></div>
@@ -100,13 +133,13 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 <div id="updBar" class="hidden"><span>Доступна новая версия</span><button id="updBtn">Обновить</button></div>
 <script>
 'use strict';
-const APP_VERSION='1.3',APP_DATE='15.11.2026';
+const APP_VERSION='1.4',APP_DATE='15.11.2026';
 const OWNER='mrtekhnik',PUB_HOST='mrtekhnik.github.io';
 const API=`https://api.github.com/users/${OWNER}/repos?per_page=100`;
 const EXCLUDE=['apps',PUB_HOST];
 const DB_NAME='apps_launcher',ICON_CACHE='apps-icons';
 const REFRESH_MS=10*60*1000;
-const LS={last:'apps.last',auto:'apps.autoLast',tryAt:'apps.lastTry',okAt:'apps.lastOk',status:'apps.listStatus',opened:'apps.opened'};
+const LS={view:'apps.view',ver:'apps.verBadge',bk:'apps.bkRemind',bkDays:'apps.bkDays',last:'apps.last',auto:'apps.autoLast',tryAt:'apps.lastTry',okAt:'apps.lastOk',status:'apps.listStatus',opened:'apps.opened'};
 const $=s=>document.querySelector(s);
 const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v);}catch(e){}};
@@ -149,8 +182,10 @@ function askText(title,text,ph){return modal((box,close)=>{
 
 /* ---------- хранилище: IndexedDB apps_launcher ---------- */
 let db=null;
-function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);
-  r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('apps'))d.createObjectStore('apps',{keyPath:'id'});if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta',{keyPath:'k'});};
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,2);
+  r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('apps'))d.createObjectStore('apps',{keyPath:'id'});if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta',{keyPath:'k'});
+    if(!d.objectStoreNames.contains('icons'))d.createObjectStore('icons');};
+  r.onblocked=()=>rej(new Error('blocked'));
   r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 const tx=(st,mode,fn)=>new Promise((res,rej)=>{const t=db.transaction(st,mode);let out;const r=fn(t);if(r&&'onsuccess' in r)r.onsuccess=()=>{out=r.result;};t.oncomplete=()=>res(out);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error);});
 let apps=new Map(),order=[],hidden=new Set();
@@ -163,13 +198,19 @@ function normOrder(){const seen=new Set();order=order.filter(id=>apps.has(id)&&!
 async function saveMeta(){normOrder();await tx('meta','readwrite',t=>{const s=t.objectStore('meta');s.put({k:'order',v:order});s.put({k:'hidden',v:[...hidden]});});}
 async function saveApps(){await tx('apps','readwrite',t=>{const s=t.objectStore('apps');s.clear();for(const a of apps.values())s.put(a);});await saveMeta();}
 
-/* ---------- иконки в своём кэше ---------- */
+/* ---------- иконки — в своей базе (IndexedDB): кэши браузера могут очистить другие приложения ---------- */
 const iconURLs=new Map();
-async function cacheIcon(url){if(!url||!('caches' in window))return;try{const r=await fetch(url,{cache:'no-cache'});if(r.ok){const c=await caches.open(ICON_CACHE);await c.put(url,r);const old=iconURLs.get(url);if(old&&old.startsWith('blob:'))URL.revokeObjectURL(old);iconURLs.delete(url);}}catch(e){}}
-async function pruneIcons(){if(!('caches' in window))return;try{const keep=new Set([...apps.values()].map(a=>a.icon).filter(Boolean));const c=await caches.open(ICON_CACHE);
-  for(const req of await c.keys())if(!keep.has(req.url))await c.delete(req);}catch(e){}}
+async function cacheIcon(url){if(!url)return false;try{const r=await fetch(url,{cache:'no-cache'});if(!r.ok)return false;const b=await r.blob();
+  await tx('icons','readwrite',t=>t.objectStore('icons').put(b,url));const old=iconURLs.get(url);if(old&&old.startsWith('blob:'))URL.revokeObjectURL(old);iconURLs.delete(url);return true;}catch(e){return false;}}
+async function pruneIcons(){try{const keep=new Set([...apps.values()].map(a=>a.icon).filter(Boolean));const keys=await tx('icons','readonly',t=>t.objectStore('icons').getAllKeys());
+  await tx('icons','readwrite',t=>{const st=t.objectStore('icons');for(const k of keys||[])if(!keep.has(k))st.delete(k);});}catch(e){}}
+// перенос иконок из кэша apps-icons (версии 1.0–1.3)
+async function migrateIcons(){if(!('caches' in window))return;try{if(!(await caches.has(ICON_CACHE)))return;const c=await caches.open(ICON_CACHE);
+  for(const req of await c.keys()){const r=await c.match(req);if(r){const b=await r.blob();await tx('icons','readwrite',t=>t.objectStore('icons').put(b,req.url));}}
+  await caches.delete(ICON_CACHE);}catch(e){}}
 async function iconSrc(a){if(!a.icon)return defIcon(a.title||a.name);if(iconURLs.has(a.icon))return iconURLs.get(a.icon);
-  try{if('caches' in window){const c=await caches.open(ICON_CACHE);const r=await c.match(a.icon);if(r){const u=URL.createObjectURL(await r.blob());iconURLs.set(a.icon,u);return u;}}}catch(e){}
+  const fromDb=async()=>{const b=db?await tx('icons','readonly',t=>t.objectStore('icons').get(a.icon)):null;if(b){const u=URL.createObjectURL(b);iconURLs.set(a.icon,u);return u;}return null;};
+  try{const u=await fromDb();if(u)return u;if(navigator.onLine&&db&&await cacheIcon(a.icon)){const u2=await fromDb();if(u2)return u2;}}catch(e){}
   return navigator.onLine?a.icon:defIcon(a.title||a.name);}
 function setImg(img,a){img.src=defIcon(a.title||a.name);iconSrc(a).then(u=>{if(u!==img.src)img.src=u;});
   img.onerror=()=>{img.onerror=null;img.src=defIcon(a.title||a.name);};}
@@ -189,6 +230,9 @@ async function probe(url){
   if(ml&&ml.getAttribute('href')){try{const mu=new URL(ml.getAttribute('href'),base).href;const mr=await fetch(mu,{cache:'no-cache'});
     if(mr.ok){const m=await mr.json();title=String(m.name||m.short_name||title||'').trim();icon=pickIcon(m.icons,mu);}}catch(e){}}
   return {title,icon};}
+// версия на сервере — из sw.js приложения (VERSION / VER, иначе имя кэша CACHE); null — не удалось узнать
+async function probeVer(url){try{const r=await fetch(url+'sw.js',{cache:'no-store'});if(!r.ok)return '';const t=await r.text();
+  let m=t.match(/\b(?:VERSION|VER)\s*=\s*['"]([^'"]+)['"]/);if(m)return m[1];m=t.match(/\bCACHE\s*=\s*['"]([^'"]+)['"]/);return m?m[1]:'';}catch(e){return null;}}
 let busy=false,listStatus=lsGet(LS.status)||'';
 function setStatus(s){listStatus=s;lsSet(LS.status,s);}
 function statusLine(){const ok=lsGet(LS.okAt);
@@ -211,7 +255,8 @@ async function refreshList(manual){
     for(const x of found){const id=x.name.toLowerCase(),old=apps.get(id);next.set(id,Object.assign({},old||{},{id,name:x.name,url:appUrl(x.name),manual:false}));}
     for(const a of apps.values())if(a.manual&&!next.has(a.id))next.set(a.id,a);
     await Promise.all([...next.values()].map(async a=>{
-      try{const p=await probe(a.url);a.title=p.title||a.title||a.name;a.icon=p.icon;if(p.icon)await cacheIcon(p.icon);}
+      try{const p=await probe(a.url);a.title=p.title||a.title||a.name;a.icon=p.icon;if(p.icon)await cacheIcon(p.icon);
+        const v=await probeVer(a.url);if(v!==null)a.srvVer=v;}
       catch(e){if(!a.title)a.title=a.name;if(a.icon===undefined)a.icon='';}}));
     apps=next;await saveApps();await pruneIcons();setStatus('');lsSet(LS.okAt,String(Date.now()));
     render();if(!$('#setScr').classList.contains('hidden'))renderSettings();
@@ -225,16 +270,60 @@ let swScopes=null;
 async function loadScopes(){try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations){swScopes=(await navigator.serviceWorker.getRegistrations()).map(r=>r.scope);return;}}catch(e){}swScopes=null;}
 function openedOffline(a){if(swScopes)return swScopes.some(s=>s!==location.origin+'/'&&!s.startsWith(location.origin+'/apps/')&&a.url.startsWith(s));
   try{return JSON.parse(lsGet(LS.opened)||'[]').includes(a.id);}catch(e){return false;}}
+/* ---------- метки: новая версия и резервная копия ---------- */
+// кэши других приложений: какому приложению (по первой папке адреса) принадлежит какой кэш
+async function appCaches(){const map=new Map();if(!('caches' in window))return map;
+  try{for(const n of await caches.keys()){if(n.startsWith('apps-'))continue;const c=await caches.open(n);const segs=new Set();
+    for(const r of await c.keys()){try{const u=new URL(r.url);if(u.origin===location.origin){const sg=u.pathname.split('/')[1];if(sg)segs.add(decodeURIComponent(sg).toLowerCase());}}catch(e){}}
+    for(const sg of segs){if(!map.has(sg))map.set(sg,[]);map.get(sg).push(n);}}}catch(e){}
+  return map;}
+const hasNewVer=(a,map)=>{if(!a.srvVer)return false;const names=map.get(a.id);return !!(names&&names.length)&&!names.some(n=>n.endsWith(a.srvVer));};
+const lsJ=k=>{try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}};
+const tsOf=v=>{if(!v)return 0;if(typeof v==='number')return v;const t=Date.parse(v);return isNaN(t)?0:t;};
+const idbReq=q=>new Promise((res,rej)=>{q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});
+async function idbNames(){try{if(indexedDB.databases)return (await indexedDB.databases()).map(d=>d.name);}catch(e){}return null;}
+// только чтение чужой базы: открываем лишь существующую, без смены версии, и сразу закрываем
+async function readIdb(name,fn){const names=await idbNames();if(!names||!names.includes(name))return null;
+  return new Promise(res=>{let r;try{r=indexedDB.open(name);}catch(e){return res(null);}
+    r.onupgradeneeded=()=>{try{r.transaction.abort();}catch(e){}};r.onerror=()=>res(null);r.onblocked=()=>res(null);
+    r.onsuccess=async()=>{const d=r.result;d.onversionchange=()=>d.close();try{res(await fn(d));}catch(e){res(null);}finally{d.close();}};});}
+// где каждое приложение хранит данные и дату последней копии (только чтение)
+const ADAPT={
+  razmery:{ls:['razmery.'],idb:['razmery_na_foto'],bk:()=>readIdb('razmery_na_foto',async d=>{const has=n=>d.objectStoreNames.contains(n);
+    const cnt=has('projects')?await idbReq(d.transaction('projects').objectStore('projects').count()):0;
+    const b=has('meta')?await idbReq(d.transaction('meta').objectStore('meta').get('backup')):null,sy=has('meta')?await idbReq(d.transaction('meta').objectStore('meta').get('sync')):null;
+    return {has:cnt>0,exp:tsOf(b&&b.value&&b.value.lastExport),sync:tsOf(sy&&sy.value&&sy.value.lastSync)};})},
+  templates:{ls:['my-templates-v1'],idb:['shablony-fs'],bk:()=>{const m=lsJ('my-templates-v1:meta')||{},y=lsJ('my-templates-v1:sync')||{};return {has:!!lsGet('my-templates-v1'),exp:tsOf(m.lastExport),sync:tsOf(y.lastSync)};}},
+  'tech-base':{ls:['techbase_'],idb:['techbase_fs'],bk:()=>{const st=(lsJ('techbase_v1')||{}).settings||{};return {has:!!lsGet('techbase_v1'),exp:tsOf(st.lastExport),sync:tsOf(st.sync&&st.sync.lastSync)};}},
+  finance:{ls:['savings-app-'],bk:()=>({has:!!lsGet('savings-app-data'),exp:tsOf(lsGet('savings-app-last-export-ts'))||tsOf(lsGet('savings-app-last-backup')),sync:tsOf((lsJ('savings-app-sync-state')||{}).lastSync)})},
+  'uchet-kvartiry':{ls:['utilityTracker'],bk:()=>({has:!!lsGet('utilityTrackerData_v1'),exp:tsOf(lsGet('utilityTrackerLastBackup_v1')),sync:tsOf((lsJ('utilityTrackerSync_v1')||{}).lastSync)})},
+  'dxf-viewer':{ls:['dxfv.'],idb:['dxf-viewer']},
+  'text-tools':{ls:['text-tools-v1']},
+  'folder-compare':{ls:['folder-compare-'],idb:['sravnenie-papok-v0']}};
+async function bkMark(a){const ad=ADAPT[a.id];if(!ad||!ad.bk)return null;
+  try{const r=await ad.bk();if(!r||!r.has)return null;const last=Math.max(r.exp||0,r.sync||0);if(!last)return 'копии нет';
+    const d=Math.floor((Date.now()-last)/864e5),lim=+lsGet(LS.bkDays)||14;return d>=lim?`копия ${d} дн. назад`:null;}catch(e){return null;}}
+let decoSeq=0;
+async function decorate(){const seq=++decoSeq,wantV=lsGet(LS.ver)!=='0',wantB=lsGet(LS.bk)!=='0';if(!wantV&&!wantB)return;
+  const map=wantV?await appCaches():null;
+  for(const b of document.querySelectorAll('#grid .tile')){if(seq!==decoSeq)return;const a=apps.get(b.dataset.id);if(!a)continue;const tx_=b.querySelector('.tx');
+    b.querySelectorAll('.upd,.bk').forEach(x=>x.remove());
+    if(wantV&&hasNewVer(a,map))addMk(tx_,'upd','новая версия');
+    if(wantB){const m=await bkMark(a);if(seq!==decoSeq)return;if(m)addMk(tx_,'bk',m);}}}
+function addMk(el,cls,t){const o=document.createElement('span');o.className='mk '+cls;o.textContent=t;el.appendChild(o);}
+const VIEWS=['l','m','s','list'];
+const curView=()=>{const v=lsGet(LS.view);return VIEWS.includes(v)?v:'m';};
 let loaded=false;
 async function render(){
   const g=$('#grid'),em=$('#emptyMsg'),ids=visibleIds();
   if(!navigator.onLine)await loadScopes();
-  g.innerHTML='';
+  g.innerHTML='';g.className=curView()==='m'?'':'v-'+curView();
   for(const id of ids){const a=apps.get(id);const b=document.createElement('button');b.className='tile';b.dataset.id=id;
-    b.innerHTML=`<span class="ico"><img alt="" draggable="false"></span><span class="nm"></span>`;
+    b.innerHTML=`<span class="ico"><img alt="" draggable="false"></span><span class="tx"><span class="nm"></span></span>`;
     b.querySelector('.nm').textContent=a.title||a.name;setImg(b.querySelector('img'),a);
-    if(!navigator.onLine&&!openedOffline(a)){const o=document.createElement('span');o.className='off';o.textContent='не открывалось без сети';b.appendChild(o);}
+    if(!navigator.onLine&&!openedOffline(a))addMk(b.querySelector('.tx'),'off','не открывалось без сети');
     bindTile(b,id);g.appendChild(b);}
+  decorate();
   const cb=$('#contBar'),lastUrl=lsGet(LS.last),la=lsGet(LS.auto)==='1'&&lastUrl?ids.map(id=>apps.get(id)).find(a=>a.url===lastUrl):null;
   cb.classList.toggle('hidden',!la);
   if(la){cb.querySelector('span').textContent='Продолжить: '+(la.title||la.name);setImg(cb.querySelector('img'),la);cb.onclick=()=>openHere(la);}
@@ -249,11 +338,15 @@ function intentUrl(url){const u=new URL(url);return `intent://${u.host}${u.pathn
 function openInTab(a){if(isAndroid){location.href=intentUrl(a.url);return;}
   const w=window.open(a.url,'_blank');if(!w)toast('Браузер не дал открыть вкладку');}
 // долгое нажатие ~500 мс (касание) или правая кнопка мыши — меню плитки
-let lastMenuAt=0;
+let lastMenuAt=0,lpActive=false,lpSuppress=0;
+// «клик» после отпускания пальца с долгого нажатия не должен ни открыть приложение, ни закрыть только что открытое меню
+const lpEnd=()=>{if(lpActive){lpActive=false;lpSuppress=Date.now()+500;}};
+addEventListener('pointerup',lpEnd,true);addEventListener('pointercancel',lpEnd,true);
+document.addEventListener('click',e=>{if(lpActive||Date.now()<lpSuppress){e.preventDefault();e.stopPropagation();lpSuppress=0;}},true);
 function bindTile(b,id){let t=0,sx=0,sy=0,fired=false;
   const cancel=()=>{clearTimeout(t);t=0;b.classList.remove('press');};
   b.addEventListener('pointerdown',e=>{fired=false;if(e.pointerType==='mouse'&&e.button!==0)return;if(e.pointerType==='mouse')return;
-    sx=e.clientX;sy=e.clientY;b.classList.add('press');t=setTimeout(()=>{t=0;fired=true;b.classList.remove('press');tileMenu(id);},500);});
+    sx=e.clientX;sy=e.clientY;b.classList.add('press');t=setTimeout(()=>{t=0;fired=true;lpActive=true;b.classList.remove('press');tileMenu(id);},500);});
   b.addEventListener('pointermove',e=>{if(t&&Math.hypot(e.clientX-sx,e.clientY-sy)>10)cancel();});
   b.addEventListener('pointerup',cancel);b.addEventListener('pointercancel',cancel);b.addEventListener('pointerleave',cancel);
   b.addEventListener('contextmenu',e=>{e.preventDefault();cancel();if(fired||Date.now()-lastMenuAt<800)return;fired=true;tileMenu(id);});
@@ -308,6 +401,9 @@ function renderSettings(){if($('#setScr').classList.contains('hidden'))return;
   for(const id of ms){const r=rowEl(apps.get(id));const b=document.createElement('button');b.className='tb';b.textContent='Убрать';b.onclick=()=>removeManual(id);r.appendChild(b);m.appendChild(r);}
   if(!ms.length)m.appendChild(noneRow('Нет'));
   $('#setAuto').checked=lsGet(LS.auto)==='1';
+  document.querySelectorAll('#setView button').forEach(b=>b.classList.toggle('on',b.dataset.v===curView()));
+  $('#setVer').checked=lsGet(LS.ver)!=='0';$('#setBk').checked=lsGet(LS.bk)!=='0';$('#setBkBox').classList.toggle('hidden',lsGet(LS.bk)==='0');
+  const bd=String(+lsGet(LS.bkDays)||14);document.querySelectorAll('#setBkDays button').forEach(b=>b.classList.toggle('on',b.dataset.d===bd));
   $('#setFsSec').classList.toggle('hidden',!fsCan());$('#setFs').textContent=fsOn()?'Выйти из полноэкранного режима':'На весь экран';
   renderShortcuts();}
 let shortNow=[],shortPick=null;
@@ -343,6 +439,10 @@ function closeSettingsView(){$('#setScr').classList.add('hidden');$('#mainScr').
 $('#setBack').onclick=()=>history.back();
 $('#setAdd').onclick=addManual;
 $('#setAuto').onchange=e=>lsSet(LS.auto,e.target.checked?'1':null);
+document.querySelectorAll('#setView button').forEach(b=>b.onclick=()=>{lsSet(LS.view,b.dataset.v==='m'?null:b.dataset.v);renderSettings();});
+$('#setVer').onchange=e=>lsSet(LS.ver,e.target.checked?null:'0');
+$('#setBk').onchange=e=>{lsSet(LS.bk,e.target.checked?null:'0');renderSettings();};
+document.querySelectorAll('#setBkDays button').forEach(b=>b.onclick=()=>{lsSet(LS.bkDays,b.dataset.d==='14'?null:b.dataset.d);renderSettings();});
 $('#setFs').onclick=async()=>{await toggleFull();renderSettings();};
 window.addEventListener('popstate',()=>{
   if(afterBack){const f=afterBack;afterBack=null;f();return;}
@@ -363,11 +463,40 @@ function armFull(){const h=()=>{document.removeEventListener('pointerup',h,true)
     if(fsWant&&!fsOn()&&!document.hidden)document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{});};
   document.addEventListener('pointerup',h,true);document.addEventListener('keydown',h,true);}
 
+/* ---------- хранилище: сколько занимает каждое приложение ---------- */
+function sizeOf(v,depth){depth=depth||0;if(v==null)return 8;const t=typeof v;if(t==='string')return v.length*2;if(t!=='object')return 8;
+  if(v instanceof Blob)return v.size;if(v instanceof ArrayBuffer)return v.byteLength;if(ArrayBuffer.isView(v))return v.byteLength;if(depth>40)return 8;
+  let s=0;if(Array.isArray(v)){for(const x of v)s+=sizeOf(x,depth+1);return s+8;}for(const k in v)s+=k.length*2+sizeOf(v[k],depth+1);return s;}
+const idbSize=name=>readIdb(name,async d=>{let s=0;for(const st of [...d.objectStoreNames])await new Promise(res=>{const q=d.transaction(st).objectStore(st).openCursor();
+  q.onsuccess=()=>{const c=q.result;if(!c)return res();s+=sizeOf(c.key)+sizeOf(c.value);c.continue();};q.onerror=()=>res();});return s;});
+const fmtB=b=>b<1024?`${b} Б`:b<1048576?`${(b/1024).toFixed(0)} КБ`:`${(b/1048576).toFixed(1).replace('.',',')} МБ`;
+async function storageReport(){
+  const rows=new Map(),row=(k,n)=>{if(!rows.has(k))rows.set(k,{n,data:0,files:0});return rows.get(k);};
+  const ids=order.filter(id=>apps.has(id));for(const id of ids)row(id,apps.get(id).title||apps.get(id).name);
+  row('apps','Мои приложения (это приложение)');
+  const owner=(kind,name)=>{if(kind==='ls'){if(name.startsWith('apps.'))return 'apps';if(name.startsWith('mrtekhnik.'))return '~sync';}
+    if(kind==='idb'&&name===DB_NAME)return 'apps';
+    for(const [id,ad] of Object.entries(ADAPT)){const list=ad[kind]||[];if(list.some(x=>kind==='ls'?name.startsWith(x):name===x))return id;}return '~other';};
+  const nm={'~sync':'Общие (подключение синхронизации)','~other':'Прочее'};
+  try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i),v=localStorage.getItem(k)||'';const o=owner('ls',k);row(o,nm[o]||(apps.get(o)||{}).title||o).data+=(k.length+v.length)*2;}}catch(e){}
+  for(const n of (await idbNames())||[]){const o=owner('idb',n),sz=await idbSize(n);if(sz!=null)row(o,nm[o]||(apps.get(o)||{}).title||o).data+=sz;}
+  if('caches' in window)try{for(const n of await caches.keys()){const c=await caches.open(n);for(const req of await c.keys()){let seg='';try{seg=decodeURIComponent(new URL(req.url).pathname.split('/')[1]||'').toLowerCase();}catch(e){}
+      const o=seg==='apps'?'apps':rows.has(seg)?seg:'~other';const r=await c.match(req);let sz=0;try{sz=r?(await r.blob()).size:0;}catch(e){}row(o,nm[o]||o).files+=sz;}}}catch(e){}
+  let est=null,pers=null;try{est=await navigator.storage.estimate();}catch(e){}try{pers=await navigator.storage.persisted();}catch(e){}
+  return {rows:[...rows.values()].filter(r=>r.data+r.files>0).sort((a,b)=>(b.data+b.files)-(a.data+a.files)),est,pers};}
+function showStorage(){modal((box,close)=>{box.innerHTML='<h3>Хранилище</h3><p class="txt">Считаю…</p>';
+  storageReport().then(rep=>{if(!box.isConnected||!modalClose)return;
+    let h='<h3>Хранилище</h3><p class="txt"></p>';
+    const e=rep.est;const top=(e?`Всего занято: ${fmtB(e.usage||0)}${e.quota?` из доступных ~${fmtB(e.quota)}`:''}\n`:'')+`Защита от автоочистки: ${rep.pers===true?'включена':rep.pers===false?'не предоставлена браузером':'неизвестно'}`;
+    h+='<div class="stor">'+rep.rows.map(r=>`<div class="r"><div class="n">${esc(r.n)}<small>данные ${fmtB(r.data)} · файлы приложения ${fmtB(r.files)}</small></div><div class="v">${fmtB(r.data+r.files)}</div></div>`).join('')+'</div>';
+    h+='<p class="note" style="margin:10px 0 0">Хранилище общее для всех приложений с mrtekhnik.github.io. Размеры по приложениям приблизительные.</p><div class="mbtns"><button class="btn pri">OK</button></div>';
+    box.innerHTML=h;box.querySelector('.txt').textContent=top;box.querySelector('.btn.pri').onclick=()=>close(true);});});}
+
 /* ---------- меню ---------- */
 $('#menuBtn').onclick=async()=>{
-  const k=await choose('Меню','',[...(fsCan()?[{k:'fs',l:fsOn()?'Выйти из полноэкранного режима':'На весь экран'}]:[]),{k:'rf',l:'Обновить список'},{k:'add',l:'Добавить вручную'},{k:'st',l:'Настройки'},{k:'up',l:'Проверить обновления'}],
+  const k=await choose('Меню','',[...(fsCan()?[{k:'fs',l:fsOn()?'Выйти из полноэкранного режима':'На весь экран'}]:[]),{k:'rf',l:'Обновить список'},{k:'add',l:'Добавить вручную'},{k:'st',l:'Настройки'},{k:'stor',l:'Хранилище'},{k:'up',l:'Проверить обновления'}],
     `Версия ${APP_VERSION} от ${APP_DATE}<br>${statusLine()}`);
-  if(k==='fs')toggleFull();else if(k==='rf')refreshList(true);else if(k==='add')addManual();else if(k==='st')openSettings();else if(k==='up')checkUpdate();};
+  if(k==='fs')toggleFull();else if(k==='rf')refreshList(true);else if(k==='add')addManual();else if(k==='st')openSettings();else if(k==='stor')showStorage();else if(k==='up')checkUpdate();};
 
 window.addEventListener('online',()=>{render();maybeRefresh();});
 window.addEventListener('offline',()=>render());
@@ -375,10 +504,10 @@ window.addEventListener('pageshow',e=>{if(e.persisted&&loaded)loadScopes().then(
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&loaded)maybeRefresh();});
 
 async function start(){
-  try{db=await openDB();await loadAll();}catch(e){loaded=true;render();alertBox('Хранилище недоступно','Браузер не дал доступ к IndexedDB. Список приложений не сможет сохраняться.');return;}
+  try{db=await openDB();await loadAll();await migrateIcons();}catch(e){loaded=true;render();alertBox('Хранилище недоступно','Браузер не дал доступ к IndexedDB. Список приложений не сможет сохраняться.');return;}
   loaded=true;await loadScopes();render();
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
-  if(navigator.onLine&&(!apps.size||Date.now()-+(lsGet(LS.tryAt)||0)>=REFRESH_MS)){const p=refreshList(false);if(!apps.size)render();await p;}
+  if(navigator.onLine&&(!apps.size||[...apps.values()].some(a=>a.srvVer===undefined)||Date.now()-+(lsGet(LS.tryAt)||0)>=REFRESH_MS)){const p=refreshList(false);if(!apps.size)render();await p;}
 }
 start();
 
