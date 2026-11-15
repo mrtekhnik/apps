@@ -92,6 +92,21 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 .btn.block{display:block;width:100%;margin-top:8px}
 .mfoot{border-top:1px solid var(--line);margin-top:12px;padding-top:10px;font-size:12px;color:var(--muted);line-height:1.5}
 .mfoot .warn{color:var(--danger)}
+/* вкладки */
+#tabScr{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;background:var(--bg)}
+#tabBar{background:var(--bar);color:var(--barInk);display:flex;align-items:center;gap:2px;padding:2px 4px;padding-top:calc(2px + env(safe-area-inset-top));min-height:48px;flex:none}
+#tabList{flex:1;display:flex;gap:4px;overflow-x:auto;min-width:0;scrollbar-width:none}
+#tabList::-webkit-scrollbar{display:none}
+.tab{display:flex;align-items:center;gap:6px;height:42px;min-width:44px;padding:0 8px;border-radius:10px;flex:none;max-width:46vw;color:var(--barInk);opacity:.65}
+.tab img{width:26px;height:26px;border-radius:7px;flex:none}
+.tab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:600}
+.tab:not(.on) span{display:none}
+@media(min-width:700px){.tab:not(.on) span{display:inline;font-weight:400}}
+.tab.on{background:rgba(255,255,255,.16);opacity:1}
+#tabFrames{flex:1;position:relative}
+#tabFrames iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff}
+#tabFrames iframe.off{visibility:hidden;pointer-events:none}
+.tile.open .ico{box-shadow:0 0 0 3px var(--accent)}
 #toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#222a33;color:#fff;padding:10px 16px;border-radius:20px;z-index:60;font-size:14px;max-width:90%;text-align:center;pointer-events:none}
 #updBar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom));z-index:55;background:#222a33;color:#fff;border-radius:24px;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 16px;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;white-space:nowrap}
 #updBar button{background:var(--accent);color:#fff;border-radius:18px;height:36px;padding:0 14px;font-weight:600}
@@ -117,6 +132,8 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
   <div class="sec"><h2>Скрытые приложения</h2><div class="card" id="setHidden"></div></div>
   <div class="sec"><h2>Добавленные вручную</h2><div class="card" id="setManual"></div>
     <button class="btn block" id="setAdd">Добавить вручную</button></div>
+  <div class="sec"><h2>Вкладки</h2><div class="card"><label class="chk"><input type="checkbox" id="setTabs"><span>Держать открытые приложения во вкладках</span></label></div>
+    <p class="note">Открытые приложения не перезагружаются при переключении. Полоска вверху: значки открытых приложений, ▦ — к плиткам, × — закрыть вкладку. Одновременно открыто не больше 4 — самое давнее закроется. Если выключить — приложение открывается вместо плиток, как раньше.</p></div>
   <div class="sec"><h2>Последнее приложение</h2><div class="card"><label class="chk"><input type="checkbox" id="setAuto"><span>Кнопка «Продолжить» с последним открытым приложением</span></label></div>
     <p class="note">Кнопка над плитками: одно касание — и вы в последнем приложении. «Назад» вернёт к плиткам.</p></div>
   <div class="sec"><h2>Меню по долгому нажатию на значок</h2>
@@ -128,24 +145,28 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
     <p class="note">Только когда приложение открыто во вкладке браузера.</p></div>
   <div style="height:40px"></div>
 </div>
+<div id="tabScr" class="hidden">
+  <div id="tabBar"><button class="ibtn" id="tabHome" data-ic="grid" aria-label="Все приложения"></button><div id="tabList"></div><button class="ibtn" id="tabClose" data-ic="close" aria-label="Закрыть вкладку"></button></div>
+  <div id="tabFrames"></div>
+</div>
 <div id="ov" class="hidden"><div id="mbox"></div></div>
 <div id="toast" class="hidden"></div>
 <div id="updBar" class="hidden"><span>Доступна новая версия</span><button id="updBtn">Обновить</button></div>
 <script>
 'use strict';
-const APP_VERSION='1.5',APP_DATE='15.11.2026';
+const APP_VERSION='1.6',APP_DATE='15.11.2026';
 const OWNER='mrtekhnik',PUB_HOST='mrtekhnik.github.io';
 const API=`https://api.github.com/users/${OWNER}/repos?per_page=100`;
 const EXCLUDE=['apps',PUB_HOST];
 const DB_NAME='apps_launcher',ICON_CACHE='apps-icons';
 const REFRESH_MS=10*60*1000;
-const LS={view:'apps.view',ver:'apps.verBadge',bk:'apps.bkRemind',bkDays:'apps.bkDays',last:'apps.last',auto:'apps.autoLast',tryAt:'apps.lastTry',okAt:'apps.lastOk',status:'apps.listStatus',opened:'apps.opened'};
+const LS={tabs:'apps.tabs',view:'apps.view',ver:'apps.verBadge',bk:'apps.bkRemind',bkDays:'apps.bkDays',last:'apps.last',auto:'apps.autoLast',tryAt:'apps.lastTry',okAt:'apps.lastOk',status:'apps.listStatus',opened:'apps.opened'};
 const $=s=>document.querySelector(s);
 const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v);}catch(e){}};
 
 /* ---------- значки ---------- */
-const ICONS={dots:'M12 5h.01M12 12h.01M12 19h.01',back:'M15 18l-6-6 6-6',up:'M12 19V5M5 12l7-7 7 7',down:'M12 5v14M19 12l-7 7-7-7',hide:'M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 3.9M6.6 6.6C3.9 8.3 2 12 2 12s4 7 10 7a9.7 9.7 0 0 0 5.4-1.6'};
+const ICONS={grid:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',close:'M18 6 6 18M6 6l12 12',dots:'M12 5h.01M12 12h.01M12 19h.01',back:'M15 18l-6-6 6-6',up:'M12 19V5M5 12l7-7 7 7',down:'M12 5v14M19 12l-7 7-7-7',hide:'M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 3.9M6.6 6.6C3.9 8.3 2 12 2 12s4 7 10 7a9.7 9.7 0 0 0 5.4-1.6'};
 const ic=n=>n==='dots'?'<svg class="i" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>':`<svg class="i" viewBox="0 0 24 24"><path d="${ICONS[n]}"/></svg>`;
 document.querySelectorAll('[data-ic]').forEach(b=>b.innerHTML=ic(b.dataset.ic));
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -333,7 +354,7 @@ async function render(){
   g.innerHTML='';g.className=curView()==='m'?'':'v-'+curView();
   for(const id of ids){const a=apps.get(id);const b=document.createElement('button');b.className='tile';b.dataset.id=id;
     b.innerHTML=`<span class="ico"><img alt="" draggable="false"></span><span class="tx"><span class="nm"></span></span>`;
-    b.querySelector('.nm').textContent=a.title||a.name;setImg(b.querySelector('img'),a);
+    b.querySelector('.nm').textContent=a.title||a.name;setImg(b.querySelector('img'),a);if(tabs.some(t=>t.id===id))b.classList.add('open');
     if(!navigator.onLine&&!openedOffline(a))addMk(b.querySelector('.tx'),'off','не открывалось без сети');
     bindTile(b,id);g.appendChild(b);}
   decorate();
@@ -345,7 +366,43 @@ async function render(){
     em.textContent=!loaded?'Загрузка…':apps.size?'Все приложения скрыты.\nВернуть их можно в ⋮ → Настройки.':busy?'Загружаю список приложений…':'Список пуст.\nПодключитесь к интернету и нажмите ⋮ → Обновить список.';}}
 function openHere(a){lsSet(LS.last,a.url);
   try{const s=new Set(JSON.parse(lsGet(LS.opened)||'[]'));s.add(a.id);lsSet(LS.opened,JSON.stringify([...s]));}catch(e){}
-  location.href=a.url;}
+  if(tabsOn())openTab(a);else location.href=a.url;}
+
+/* ---------- вкладки: каждое открытое приложение живёт в своей рамке и не перезагружается ---------- */
+const MAX_TABS=4;
+const tabsOn=()=>lsGet(LS.tabs)!=='0';
+let tabs=[],activeTab=null,tabEntry=false;
+const tabView=()=>!$('#tabScr').classList.contains('hidden');
+async function openTab(a){let t=tabs.find(x=>x.id===a.id);
+  if(!t){if(tabs.length>=MAX_TABS){const old=tabs.slice().sort((x,y)=>x.used-y.used)[0];const oa=apps.get(old.id);await closeTab(old.id,true);
+      toast(`Закрыта вкладка «${oa?oa.title||oa.name:old.id}» — открыто не больше ${MAX_TABS}`,3500);}
+    const f=document.createElement('iframe');f.src=a.url;f.title=a.title||a.name;
+    f.allow='fullscreen; clipboard-read; clipboard-write; web-share; camera; microphone; geolocation; publickey-credentials-get; publickey-credentials-create';
+    f.dataset.id=a.id;$('#tabFrames').appendChild(f);t={id:a.id,frame:f,used:0};tabs.push(t);}
+  showTab(a.id);}
+function showTab(id){const t=tabs.find(x=>x.id===id);if(!t)return;activeTab=id;t.used=Date.now();
+  for(const x of tabs)x.frame.classList.toggle('off',x.id!==id);
+  $('#mainScr').classList.add('hidden');$('#setScr').classList.add('hidden');$('#tabScr').classList.remove('hidden');renderTabBar();
+  if(!tabEntry){history.pushState({tab:1},'');tabEntry=true;}
+  const a=apps.get(id);if(a)lsSet(LS.last,a.url);
+  try{t.frame.focus();t.frame.contentWindow.focus();}catch(e){}}
+function showTiles(){$('#tabScr').classList.add('hidden');$('#mainScr').classList.remove('hidden');activeTab=null;render();}
+function renderTabBar(){const l=$('#tabList');l.innerHTML='';
+  for(const t of tabs){const a=apps.get(t.id)||{title:t.id,name:t.id};const b=document.createElement('button');b.className='tab'+(t.id===activeTab?' on':'');b.dataset.id=t.id;
+    b.innerHTML='<img alt=""><span></span>';b.querySelector('span').textContent=a.title||a.name;b.setAttribute('aria-label',a.title||a.name);setImg(b.querySelector('img'),a);
+    b.onclick=()=>showTab(t.id);l.appendChild(b);}
+  const on=l.querySelector('.on');if(on)on.scrollIntoView({block:'nearest',inline:'nearest'});}
+// перед закрытием даём приложению сохранить несохранённое: как будто его окно скрыли
+function flushFrame(f){try{const w=f.contentWindow,d=w.document;
+  Object.defineProperty(d,'visibilityState',{configurable:true,get:()=>'hidden'});Object.defineProperty(d,'hidden',{configurable:true,get:()=>true});
+  d.dispatchEvent(new w.Event('visibilitychange'));w.dispatchEvent(new w.PageTransitionEvent('pagehide',{persisted:false}));}catch(e){}}
+async function closeTab(id,quiet){const i=tabs.findIndex(x=>x.id===id);if(i<0)return;const t=tabs[i];
+  flushFrame(t.frame);await new Promise(r=>setTimeout(r,400));t.frame.remove();tabs.splice(i,1);
+  if(quiet)return;
+  if(activeTab===id){const next=tabs.slice().sort((x,y)=>y.used-x.used)[0];if(next)showTab(next.id);else showTiles();}else renderTabBar();}
+async function closeAllTabs(){for(const t of tabs.slice())await closeTab(t.id,true);if(tabView())showTiles();}
+$('#tabHome').onclick=()=>showTiles();
+$('#tabClose').onclick=()=>{if(activeTab)closeTab(activeTab);};
 const isAndroid=/Android/i.test(navigator.userAgent);
 function intentUrl(url){const u=new URL(url);return `intent://${u.host}${u.pathname}${u.search}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url)};end`;}
 function openInTab(a){if(isAndroid){location.href=intentUrl(a.url);return;}
@@ -377,7 +434,7 @@ async function move(id,dir){const ids=visibleIds(),i=ids.indexOf(id),j=i+dir;if(
   const oi=order.indexOf(id),oj=order.indexOf(ids[j]);[order[oi],order[oj]]=[order[oj],order[oi]];await saveMeta();render();renderSettings();}
 async function setHidden(id,h){if(h){hidden.add(id);const a=apps.get(id);if(a&&lsGet(LS.last)===a.url)lsSet(LS.last,null);}else hidden.delete(id);
   await saveMeta();render();renderSettings();if(h)toast('Скрыто. Вернуть — ⋮ → Настройки');}
-async function removeManual(id){const a=apps.get(id);if(!a)return;apps.delete(id);hidden.delete(id);if(lsGet(LS.last)===a.url)lsSet(LS.last,null);
+async function removeManual(id){const a=apps.get(id);if(!a)return;if(tabs.some(t=>t.id===id))await closeTab(id,true);apps.delete(id);hidden.delete(id);if(lsGet(LS.last)===a.url)lsSet(LS.last,null);
   await saveApps();await pruneIcons();render();renderSettings();toast('Убрано из списка');}
 
 /* ---------- добавить вручную ---------- */
@@ -413,7 +470,7 @@ function renderSettings(){if($('#setScr').classList.contains('hidden'))return;
   const m=$('#setManual');m.innerHTML='';const ms=order.filter(id=>apps.get(id)&&apps.get(id).manual);
   for(const id of ms){const r=rowEl(apps.get(id));const b=document.createElement('button');b.className='tb';b.textContent='Убрать';b.onclick=()=>removeManual(id);r.appendChild(b);m.appendChild(r);}
   if(!ms.length)m.appendChild(noneRow('Нет'));
-  $('#setAuto').checked=lsGet(LS.auto)==='1';
+  $('#setAuto').checked=lsGet(LS.auto)==='1';$('#setTabs').checked=tabsOn();
   document.querySelectorAll('#setView button').forEach(b=>b.classList.toggle('on',b.dataset.v===curView()));
   $('#setVer').checked=lsGet(LS.ver)!=='0';$('#setBk').checked=lsGet(LS.bk)!=='0';$('#setBkBox').classList.toggle('hidden',lsGet(LS.bk)==='0');
   const bd=String(+lsGet(LS.bkDays)||14);document.querySelectorAll('#setBkDays button').forEach(b=>b.classList.toggle('on',b.dataset.d===bd));
@@ -452,6 +509,7 @@ function closeSettingsView(){$('#setScr').classList.add('hidden');$('#mainScr').
 $('#setBack').onclick=()=>history.back();
 $('#setAdd').onclick=addManual;
 $('#setAuto').onchange=e=>lsSet(LS.auto,e.target.checked?'1':null);
+$('#setTabs').onchange=async e=>{lsSet(LS.tabs,e.target.checked?null:'0');if(!e.target.checked&&tabs.length){await closeAllTabs();toast('Вкладки закрыты');}};
 document.querySelectorAll('#setView button').forEach(b=>b.onclick=()=>{lsSet(LS.view,b.dataset.v==='m'?null:b.dataset.v);renderSettings();});
 $('#setVer').onchange=e=>lsSet(LS.ver,e.target.checked?null:'0');
 $('#setBk').onchange=e=>{lsSet(LS.bk,e.target.checked?null:'0');renderSettings();};
@@ -460,7 +518,10 @@ $('#setFs').onclick=async()=>{await toggleFull();renderSettings();};
 window.addEventListener('popstate',()=>{
   if(afterBack){const f=afterBack;afterBack=null;f();return;}
   if(modalClose){modalClose(null,true);return;}
-  if(!$('#setScr').classList.contains('hidden'))closeSettingsView();});
+  const onTab=!!(history.state&&history.state.tab);if(!onTab&&!(history.state&&history.state.s))tabEntry=false;
+  if(!$('#setScr').classList.contains('hidden')){closeSettingsView();return;}
+  // «Назад» с главного экрана приложения во вкладке — к плиткам; вкладка остаётся открытой
+  if(tabView()&&!onTab)showTiles();});
 
 /* ---------- «На весь экран» — только когда открыто во вкладке браузера (как в «Размеры на фото» 1.47) ---------- */
 const inTab=()=>!(matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: minimal-ui)').matches||navigator.standalone);
