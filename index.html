@@ -111,6 +111,19 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 #openBar span{flex:1}
 #openBar button{min-height:40px;padding:0 12px;border-radius:10px;background:#fff;font-weight:600;font-size:14px}
 @media(min-width:700px){#openBar{max-width:420px;margin:16px 20px 0}}
+/* вход */
+#lockScr{position:fixed;inset:0;z-index:500;background:#1d2733;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
+#lockScr .lk{width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;color:#e9eef5}
+#lockScr h2{margin:4px 0 8px;font-size:20px}
+#lockScr .inp{text-align:center;font-size:20px;letter-spacing:2px}
+#lockScr .btn{width:100%}
+#lockScr .btn.ghost{color:#c7d2de}
+#lockScr .lkm{min-height:20px;color:#ff8a80;margin:0}
+#lockScr .lkf{color:#9fb0c3;text-decoration:underline;font-size:14px;margin-top:8px;min-height:44px}
+#lockScr .lkr{font-size:14px;color:#c7d2de;text-align:left;line-height:1.45}
+.pwm{-webkit-text-security:disc}
+.fld{display:block;margin:10px 0 4px;font-size:14px;color:var(--muted)}
+.zmsg{min-height:20px;color:var(--accent);font-size:14px;margin:8px 4px 0}
 #toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#222a33;color:#fff;padding:10px 16px;border-radius:20px;z-index:60;font-size:14px;max-width:90%;text-align:center;pointer-events:none}
 #updBar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom));z-index:55;background:#222a33;color:#fff;border-radius:24px;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 16px;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;white-space:nowrap}
 #updBar button{background:var(--accent);color:#fff;border-radius:18px;height:36px;padding:0 14px;font-weight:600}
@@ -137,6 +150,17 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
   <div class="sec"><h2>Скрытые приложения</h2><div class="card" id="setHidden"></div></div>
   <div class="sec"><h2>Добавленные вручную</h2><div class="card" id="setManual"></div>
     <button class="btn block" id="setAdd">Добавить вручную</button></div>
+  <div class="sec"><h2>Вход по паролю и отпечатку</h2><div class="card" style="padding:12px">
+    <p class="txt zst" style="margin:0"></p>
+    <div class="zcur"><label class="fld">Текущий пароль</label><input class="inp pwm zp0" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore></div>
+    <label class="fld zl1"></label><input class="inp pwm zp1" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore>
+    <label class="fld">Повторите</label><input class="inp pwm zp2" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore>
+    <div class="mbtns" style="justify-content:flex-start"><button class="btn pri zsv">Сохранить пароль</button><button class="btn zoff">Отключить защиту</button></div>
+    <p class="zmsg"></p></div>
+    <div class="card zbioc" style="margin-top:10px"><label class="chk"><input type="checkbox" class="zb"><span>Отпечаток пальца или лицо</span></label></div>
+    <div class="zafw"><p class="note">Снова спрашивать после работы в фоне:</p>
+    <div class="seg zaf"><button data-a="0">Сразу</button><button data-a="1">1 мин</button><button data-a="5">5 мин</button><button data-a="15">15 мин</button><button data-a="-1">При запуске</button></div></div>
+    <p class="note">Защита закрывает экран лаунчера вместе с открытыми в нём приложениями. Это защита от чужих глаз, а не шифрование: данные приложений хранятся в браузере без шифрования, и приложение можно открыть по его адресу в Chrome в обход лаунчера — для этого у приложений своя защита. Пароль не восстанавливается: если забудете, на экране входа можно сбросить настройки лаунчера (порядок, скрытые, защиту) — данные приложений не затрагиваются.</p></div>
   <div class="sec"><h2>Вкладки</h2><div class="card"><label class="chk"><input type="checkbox" id="setTabs"><span>Держать открытые приложения во вкладках</span></label></div>
     <p class="note">Открытые приложения не перезагружаются при переключении: «Назад» с главного экрана приложения — к плиткам, касание плитки — снова в приложение. Открытые отмечены рамкой; закрыть — долгое нажатие на плитку → «Закрыть вкладку» или «Закрыть все». Одновременно открыто не больше 4 — самое давнее закроется. Если выключить — приложение открывается вместо плиток, как раньше.</p>
     <div id="setBarBox"><p class="note">Полоска вкладок вверху (▦ — к плиткам, значки открытых, × — закрыть):</p>
@@ -156,12 +180,13 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
   <div id="tabBar"><button class="ibtn" id="tabHome" data-ic="grid" aria-label="Все приложения"></button><div id="tabList"></div><button class="ibtn" id="tabClose" data-ic="close" aria-label="Закрыть вкладку"></button></div>
   <div id="tabFrames"></div>
 </div>
+<div id="lockScr" class="hidden"></div>
 <div id="ov" class="hidden"><div id="mbox"></div></div>
 <div id="toast" class="hidden"></div>
 <div id="updBar" class="hidden"><span>Доступна новая версия</span><button id="updBtn">Обновить</button></div>
 <script>
 'use strict';
-const APP_VERSION='1.7',APP_DATE='15.11.2026';
+const APP_VERSION='1.8',APP_DATE='16.11.2026';
 const OWNER='mrtekhnik',PUB_HOST='mrtekhnik.github.io';
 const API=`https://api.github.com/users/${OWNER}/repos?per_page=100`;
 const EXCLUDE=['apps',PUB_HOST];
@@ -484,6 +509,7 @@ function renderSettings(){if($('#setScr').classList.contains('hidden'))return;
   const m=$('#setManual');m.innerHTML='';const ms=order.filter(id=>apps.get(id)&&apps.get(id).manual);
   for(const id of ms){const r=rowEl(apps.get(id));const b=document.createElement('button');b.className='tb';b.textContent='Убрать';b.onclick=()=>removeManual(id);r.appendChild(b);m.appendChild(r);}
   if(!ms.length)m.appendChild(noneRow('Нет'));
+  renderLockSet();$('#setScr').querySelector('.zmsg').textContent='';
   $('#setAuto').checked=lsGet(LS.auto)==='1';$('#setTabs').checked=tabsOn();$('#setBarBox').classList.toggle('hidden',!tabsOn());
   document.querySelectorAll('#setBar button').forEach(b=>b.classList.toggle('on',b.dataset.b===barMode()));
   document.querySelectorAll('#setView button').forEach(b=>b.classList.toggle('on',b.dataset.v===curView()));
@@ -532,6 +558,7 @@ $('#setBk').onchange=e=>{lsSet(LS.bk,e.target.checked?null:'0');renderSettings()
 document.querySelectorAll('#setBkDays button').forEach(b=>b.onclick=()=>{lsSet(LS.bkDays,b.dataset.d==='14'?null:b.dataset.d);renderSettings();});
 $('#setFs').onclick=async()=>{await toggleFull();renderSettings();};
 window.addEventListener('popstate',()=>{
+  if(appLocked){tabEntry=!!(history.state&&history.state.tab);return;}
   if(afterBack){const f=afterBack;afterBack=null;f();return;}
   if(modalClose){modalClose(null,true);return;}
   const onTab=!!(history.state&&history.state.tab);if(!onTab&&!(history.state&&history.state.s))tabEntry=false;
@@ -552,6 +579,65 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){if(fsWant)
 function armFull(){const h=()=>{document.removeEventListener('pointerup',h,true);document.removeEventListener('keydown',h,true);
     if(fsWant&&!fsOn()&&!document.hidden)document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{});};
   document.addEventListener('pointerup',h,true);document.addEventListener('keydown',h,true);}
+
+/* ---------- вход по паролю / PIN и отпечатку (WebAuthn), как в «Размерах на фото» ---------- */
+// В localStorage (ключ apps.lock): соль и хэш PBKDF2, id ключа отпечатка, через сколько минут в фоне спрашивать снова.
+const LOCK_KEY='apps.lock';
+function lockCfg(){try{const c=JSON.parse(localStorage.getItem(LOCK_KEY)||'null');return c&&c.hash?c:null;}catch(e){return null;}}
+function saveLock(c){try{if(c)localStorage.setItem(LOCK_KEY,JSON.stringify(c));else localStorage.removeItem(LOCK_KEY);}catch(e){}}
+const b64=u=>btoa(String.fromCharCode(...new Uint8Array(u))),ub64=t=>Uint8Array.from(atob(t),ch=>ch.charCodeAt(0));
+async function pwHash(pw,salt,iter){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveBits']);
+  return b64(await crypto.subtle.deriveBits({name:'PBKDF2',salt:ub64(salt),iterations:iter,hash:'SHA-256'},k,256));}
+async function setPassword(pw){const salt=b64(crypto.getRandomValues(new Uint8Array(16))),iter=150000,c=lockCfg()||{after:5};
+  Object.assign(c,{v:1,salt,iter,hash:await pwHash(pw,salt,iter),pin:/^\d+$/.test(pw)});saveLock(c);}
+async function bioAvailable(){try{return !!(window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());}catch(e){return false;}}
+async function bioRegister(){const cr=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:'Мои приложения',id:location.hostname},
+  user:{id:crypto.getRandomValues(new Uint8Array(16)),name:'apps',displayName:'Мои приложения'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+  authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'discouraged'},timeout:60000,attestation:'none'}});return b64(cr.rawId);}
+async function bioCheck(id){const r=await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rpId:location.hostname,
+  allowCredentials:[{type:'public-key',id:ub64(id),transports:['internal']}],userVerification:'required',timeout:60000}});return !!r;}
+let appLocked=false,hiddenAt=0,lockTries=0,lockUntil=0;
+function showLock(){const c=lockCfg();if(!c||appLocked)return;appLocked=true;const el=$('#lockScr');el.classList.remove('hidden');
+  if(modalClose)modalClose(null);
+  el.innerHTML=`<div class="lk"><img src="icon-192.png" width="72" height="72" alt=""><h2>Мои приложения</h2>
+  <input type="text" class="inp lkp pwm" name="apps-lock-${Date.now()}" placeholder="${c.pin?'PIN-код':'Пароль'}" ${c.pin?'inputmode="numeric" pattern="[0-9]*"':''} autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore enterkeyhint="go">
+  <button class="btn pri lkg">Войти</button>${c.bio?'<button class="btn ghost lkb">Отпечаток или лицо</button>':''}<p class="lkm"></p><button class="lkf">Забыли пароль?</button></div>`;
+  const q=x=>el.querySelector(x),p=q('.lkp'),msg=t=>q('.lkm').textContent=t;
+  const go=async()=>{const w=lockUntil-Date.now();if(w>0){msg(`Подождите ${Math.ceil(w/1000)} с`);return;}
+    if(await pwHash(p.value,c.salt,c.iter)===c.hash){unlock();return;}p.value='';lockTries++;
+    if(lockTries>=5){lockTries=0;lockUntil=Date.now()+30000;msg('5 неверных попыток — подождите 30 с');}else msg('Неверно');};
+  q('.lkg').onclick=go;p.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go();}});
+  const bio=async()=>{try{if(await bioCheck(c.bio))unlock();}catch(e){msg('Не получилось — введите '+(c.pin?'PIN-код':'пароль'));p.focus();}};
+  if(c.bio){q('.lkb').onclick=bio;setTimeout(bio,250);}else setTimeout(()=>p.focus(),100);
+  q('.lkf').onclick=()=>{q('.lk').innerHTML=`<h2>Пароль не восстанавливается</h2><p class="lkr">Можно сбросить настройки лаунчера на этом устройстве: защиту, порядок и скрытые плитки, вид и метки.
+    Данные ваших приложений не затрагиваются. Список приложений лаунчер загрузит заново.</p><input class="inp lkd" placeholder="напишите СБРОСИТЬ" autocomplete="off">
+    <button class="btn lkx" style="background:#c62828;color:#fff">Сбросить настройки лаунчера</button><button class="btn ghost lkc">Назад</button>`;
+    el.querySelector('.lkc').onclick=()=>{appLocked=false;showLock();};
+    el.querySelector('.lkx').onclick=async()=>{if(el.querySelector('.lkd').value.trim().toUpperCase()!=='СБРОСИТЬ')return;
+      for(const t of tabs)t.frame.remove();
+      try{Object.keys(localStorage).filter(k=>k.startsWith('apps.')).forEach(k=>localStorage.removeItem(k));}catch(e){}
+      try{db&&db.close();}catch(e){}await new Promise(r=>{const d=indexedDB.deleteDatabase(DB_NAME);d.onsuccess=d.onerror=d.onblocked=()=>r();});location.reload();};};}
+function unlock(){appLocked=false;lockTries=0;if(fsWant&&!fsOn())armFull();const el=$('#lockScr');el.classList.add('hidden');el.innerHTML='';
+  if(activeTab){const t=tabs.find(x=>x.id===activeTab);try{t&&t.frame.contentWindow.focus();}catch(e){}}}
+document.addEventListener('visibilitychange',()=>{const c=lockCfg();if(!c)return;
+  if(document.visibilityState==='hidden'){hiddenAt=Date.now();if(c.after===0)showLock();}
+  else if(c.after>0&&hiddenAt&&Date.now()-hiddenAt>=c.after*60000)showLock();});
+// настройки защиты
+function renderLockSet(){const q=c=>$('#setScr').querySelector(c),c=lockCfg(),on=!!c;
+  q('.zst').textContent=on?`Вход по ${c.pin?'PIN-коду':'паролю'} включён`+(c.bio?', отпечаток или лицо тоже':''):'Защита выключена — лаунчер открывается без пароля.';
+  q('.zcur').classList.toggle('hidden',!on);q('.zl1').textContent=on?'Новый пароль или PIN (если хотите сменить)':'Новый пароль или PIN (от 4 символов)';q('.zoff').classList.toggle('hidden',!on);
+  q('.zb').checked=!!(c&&c.bio);q('.zafw').classList.toggle('hidden',!on);
+  const af=c&&c.after!==undefined?c.after:5;q('.zaf').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.a===af));
+  bioAvailable().then(av=>q('.zbioc').classList.toggle('hidden',!on||!av));}
+{const q=c=>$('#setScr').querySelector(c),msg=t=>q('.zmsg').textContent=t;
+  const curOk=async()=>{const c=lockCfg();if(!c)return true;if(await pwHash(q('.zp0').value,c.salt,c.iter)===c.hash)return true;msg('Текущий пароль неверный');return false;};
+  q('.zsv').onclick=async()=>{const a=q('.zp1').value,b=q('.zp2').value;if(a.length<4){msg('Не короче 4 символов');return;}if(a!==b){msg('Пароли не совпадают');return;}
+    if(!await curOk())return;await setPassword(a);['.zp0','.zp1','.zp2'].forEach(c=>q(c).value='');msg('Пароль сохранён');renderLockSet();};
+  q('.zoff').onclick=async()=>{if(!await curOk())return;saveLock(null);q('.zp0').value='';msg('Защита отключена');renderLockSet();};
+  q('.zb').onchange=async()=>{const c=lockCfg();if(!c)return;if(q('.zb').checked){try{c.bio=await bioRegister();saveLock(c);msg('Отпечаток или лицо подключены');}
+      catch(e){q('.zb').checked=false;msg('Не удалось подключить: '+(e&&e.name==='NotAllowedError'?'отменено':e&&e.message||e));}}
+    else{delete c.bio;saveLock(c);msg('Вход отпечатком отключён');}renderLockSet();};
+  q('.zaf').querySelectorAll('button').forEach(b=>b.onclick=()=>{const c=lockCfg();if(!c)return;c.after=+b.dataset.a;saveLock(c);renderLockSet();});}
 
 /* ---------- хранилище: сколько занимает каждое приложение ---------- */
 function sizeOf(v,depth){depth=depth||0;if(v==null)return 8;const t=typeof v;if(t==='string')return v.length*2;if(t!=='object')return 8;
@@ -599,6 +685,7 @@ async function start(){
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
   if(navigator.onLine&&(!apps.size||[...apps.values()].some(a=>a.srvVer===undefined)||Date.now()-+(lsGet(LS.tryAt)||0)>=REFRESH_MS)){const p=refreshList(false);if(!apps.size)render();await p;}
 }
+showLock();
 start();
 
 /* ---------- обновление приложения ---------- */
