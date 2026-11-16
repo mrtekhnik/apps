@@ -187,7 +187,7 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 <div id="updBar" class="hidden"><span>Доступна новая версия</span><button id="updBtn">Обновить</button></div>
 <script>
 'use strict';
-const APP_VERSION='1.9',APP_DATE='16.11.2026';
+const APP_VERSION='1.10',APP_DATE='16.11.2026';
 const OWNER='mrtekhnik',PUB_HOST='mrtekhnik.github.io';
 const API=`https://api.github.com/users/${OWNER}/repos?per_page=100`;
 const EXCLUDE=['apps',PUB_HOST];
@@ -519,8 +519,10 @@ function renderSettings(){if($('#setScr').classList.contains('hidden'))return;
   $('#setFsSec').classList.toggle('hidden',!fsCan());$('#setFs').textContent=fsOn()?'Выйти из полноэкранного режима':'На весь экран';
   renderShortcuts();}
 let shortNow=[],shortPick=null;
+// пункты меню значка ведут в лаунчер: /apps/?open=<имя> — так сначала спрашивается пароль лаунчера
+function shortTarget(href){try{const u=new URL(href),o=u.searchParams.get('open');return o?appUrl(o):href;}catch(e){return href;}}
 async function loadShortNow(){try{const r=await fetch('manifest.webmanifest');const m=await r.json();const base=r.url||location.href;
-  shortNow=(Array.isArray(m.shortcuts)?m.shortcuts:[]).map(x=>({url:new URL(x.url,base).href,title:x.name,icon:x.icons&&x.icons[0]?new URL(x.icons[0].src,base).href:''}));return true;}catch(e){shortNow=null;return false;}}
+  shortNow=(Array.isArray(m.shortcuts)?m.shortcuts:[]).map(x=>({url:shortTarget(new URL(x.url,base).href),title:x.name,icon:x.icons&&x.icons[0]?new URL(x.icons[0].src,base).href:''}));return true;}catch(e){shortNow=null;return false;}}
 async function renderShortcuts(){const s=$('#setShort');
   if(!shortNow||!shortNow.length)await loadShortNow();
   s.innerHTML='';
@@ -636,7 +638,14 @@ function showLock(){const c=lockCfg();if(!c||appLocked)return;appLocked=true;con
     el.querySelector('.lkx').onclick=async()=>{const w=lockUntil-Date.now();if(w>0){m2(`Подождите ${Math.ceil(w/1000)} с`);return;}
       if(await pwHash(normRec(el.querySelector('.lkd').value),c.rsalt,c.iter||150000)===c.rhash){saveLock(null);unlock();openSettings();toast('Защита снята — задайте новый пароль',4000);return;}
       lockTries++;if(lockTries>=5){lockTries=0;lockUntil=Date.now()+30000;m2('5 неверных попыток — подождите 30 с');}else m2('Неверный код');};};}
-function unlock(){appLocked=false;lockTries=0;if(fsWant&&!fsOn())armFull();const el=$('#lockScr');el.classList.add('hidden');el.innerHTML='';
+// запуск из меню значка лаунчера: ?open=<имя>. При защите — только после входа
+let pendingOpen=null,lastOpenReq={id:'',t:0};
+function requestOpen(name){name=String(name||'').trim();if(!name||!/^[\w.-]+$/.test(name))return;const id=name.toLowerCase();
+  if(lastOpenReq.id===id&&Date.now()-lastOpenReq.t<3000)return;lastOpenReq={id,t:Date.now()};
+  pendingOpen=id;flushOpen();}
+function flushOpen(){if(!pendingOpen||appLocked||!loaded)return;const id=pendingOpen;pendingOpen=null;
+  const a=apps.get(id)||{id,name:id,url:appUrl(id),title:id,icon:''};openHere(a);}
+function unlock(){appLocked=false;lockTries=0;setTimeout(flushOpen,0);if(fsWant&&!fsOn())armFull();const el=$('#lockScr');el.classList.add('hidden');el.innerHTML='';
   if(activeTab){const t=tabs.find(x=>x.id===activeTab);try{t&&t.frame.contentWindow.focus();}catch(e){}}}
 document.addEventListener('visibilitychange',()=>{const c=lockCfg();if(!c)return;
   if(document.visibilityState==='hidden'){hiddenAt=Date.now();if(c.after===0)showLock();}
@@ -705,9 +714,13 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 async function start(){
   try{db=await openDB();await loadAll();await migrateIcons();}catch(e){loaded=true;render();alertBox('Хранилище недоступно','Браузер не дал доступ к IndexedDB. Список приложений не сможет сохраняться.');return;}
   loaded=true;await loadScopes();render();
+  // открыть приложение из меню значка — после полной загрузки страницы, чтобы запись лаунчера осталась в истории
+  if(document.readyState==='complete')setTimeout(flushOpen,50);else addEventListener('load',()=>setTimeout(flushOpen,50),{once:true});
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
   if(navigator.onLine&&(!apps.size||[...apps.values()].some(a=>a.srvVer===undefined)||Date.now()-+(lsGet(LS.tryAt)||0)>=REFRESH_MS)){const p=refreshList(false);if(!apps.size)render();await p;}
 }
+{const o=new URLSearchParams(location.search).get('open');if(o){history.replaceState(history.state,'',location.pathname);pendingOpen=null;requestOpen(o);}}
+if('launchQueue' in window)try{launchQueue.setConsumer(p=>{try{const o=new URL(p.targetURL).searchParams.get('open');if(o)requestOpen(o);}catch(e){}});}catch(e){}
 showLock();
 start();
 
