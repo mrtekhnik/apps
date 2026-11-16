@@ -4,7 +4,7 @@
 // не перехватываются: их обслуживает сеть или сервис-воркеры самих приложений.
 // Удаляются только свои старые кэши (apps-*). Иконки с версии 1.4 хранятся в IndexedDB; старый кэш apps-icons переносит и удаляет сама страница.
 // Если свой кэш удалён чужим сервис-воркером, файлы при первой загрузке с сетью кладутся в кэш заново.
-const VERSION = '1.11';
+const VERSION = '1.12';
 const CACHE = 'apps-' + VERSION;
 const ICON_CACHE = 'apps-icons';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable.png'];

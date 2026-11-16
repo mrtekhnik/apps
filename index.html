@@ -64,6 +64,17 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 @media(min-width:700px){#contBar{width:auto;max-width:420px;margin:16px 20px 0}}
 /* настройки */
 #setScr{min-height:100vh;background:var(--bg)}
+.grp{margin:10px 10px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.gh{display:flex;align-items:center;gap:10px;width:100%;min-height:60px;padding:8px 10px 8px 16px;text-align:left}
+.gh:active{background:#eef1f5}
+.gtt{flex:1;min-width:0}
+.gt{display:block;font-weight:700;font-size:17px}
+.gs{display:block;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gch{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;color:var(--muted);flex:none}
+.grp.open .gch svg{transform:rotate(180deg)}
+.gb{border-top:1px solid var(--line);background:var(--bg);padding-bottom:10px}
+.grp:not(.open) .gb{display:none}
+.gb .sec:first-child h2{margin-top:12px}
 .sec{padding:4px 12px 8px}
 .sec h2{font-size:15px;color:var(--muted);font-weight:600;margin:18px 4px 8px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
@@ -139,17 +150,7 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 </div>
 <div id="setScr" class="hidden">
   <header class="top"><button class="ibtn" id="setBack" data-ic="back" aria-label="Назад"></button><h1>Настройки</h1></header>
-  <div class="sec"><h2>Порядок плиток</h2><div class="card" id="setOrder"></div></div>
-  <div class="sec"><h2>Вид плиток</h2><div class="seg" id="setView"><button data-v="l">Крупные</button><button data-v="m">Обычные</button><button data-v="s">Мелкие</button><button data-v="list">Список</button></div></div>
-  <div class="sec"><h2>Метки на плитках</h2><div class="card">
-    <label class="chk"><input type="checkbox" id="setVer"><span>«Новая версия» — на сервере есть обновление приложения</span></label>
-    <label class="chk" style="border-top:1px solid var(--line)"><input type="checkbox" id="setBk"><span>Напоминание о резервной копии</span></label></div>
-    <div id="setBkBox"><p class="note">Напоминать, если копии ещё не было или последняя копия (или синхронизация) старше:</p>
-    <div class="seg" id="setBkDays"><button data-d="7">7 дней</button><button data-d="14">14 дней</button><button data-d="30">30 дней</button></div>
-    <p class="note">Учитываются приложения с резервной копией: Размеры на фото, Мои шаблоны, Моя техническая база, Личные накопления, Учёт квартиры. Данные приложений только читаются.</p></div></div>
-  <div class="sec"><h2>Скрытые приложения</h2><div class="card" id="setHidden"></div></div>
-  <div class="sec"><h2>Добавленные вручную</h2><div class="card" id="setManual"></div>
-    <button class="btn block" id="setAdd">Добавить вручную</button></div>
+  <div class="grp" data-g="lock"><button class="gh" aria-expanded="false"><span class="gtt"><span class="gt">Защита</span><span class="gs"></span></span><span class="gch" data-ic="chev"></span></button><div class="gb">
   <div class="sec"><h2>Вход по паролю и отпечатку</h2><div class="card" style="padding:12px">
     <p class="txt zst" style="margin:0"></p>
     <div class="zcur"><label class="fld">Текущий пароль</label><input class="inp pwm zp0" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore></div>
@@ -165,19 +166,39 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
     <div class="seg zid"><button data-i="0">Не блокировать</button><button data-i="1">1 мин</button><button data-i="5">5 мин</button><button data-i="15">15 мин</button></div>
     <button class="btn block zlk" style="margin-top:10px">Заблокировать сейчас (Alt+L)</button></div>
     <p class="note">Защита закрывает экран лаунчера вместе с открытыми в нём приложениями. Это защита от чужих глаз, а не шифрование: данные приложений хранятся в браузере без шифрования, и приложение можно открыть по его адресу в Chrome в обход лаунчера — для этого у приложений своя защита. Если забудете пароль — снять защиту можно только кодом восстановления (он показывается один раз, сохраните его вне телефона) или войти отпечатком. Сброса без кода нет.</p></div>
+  </div></div>
+  <div class="grp" data-g="tiles"><button class="gh" aria-expanded="false"><span class="gtt"><span class="gt">Плитки</span><span class="gs"></span></span><span class="gch" data-ic="chev"></span></button><div class="gb">
+  <div class="sec"><h2>Порядок плиток</h2><div class="card" id="setOrder"></div></div>
+  <div class="sec"><h2>Вид плиток</h2><div class="seg" id="setView"><button data-v="l">Крупные</button><button data-v="m">Обычные</button><button data-v="s">Мелкие</button><button data-v="list">Список</button></div></div>
+  <div class="sec"><h2>Метки на плитках</h2><div class="card">
+    <label class="chk"><input type="checkbox" id="setVer"><span>«Новая версия» — на сервере есть обновление приложения</span></label>
+    <label class="chk" style="border-top:1px solid var(--line)"><input type="checkbox" id="setBk"><span>Напоминание о резервной копии</span></label></div>
+    <div id="setBkBox"><p class="note">Напоминать, если копии ещё не было или последняя копия (или синхронизация) старше:</p>
+    <div class="seg" id="setBkDays"><button data-d="7">7 дней</button><button data-d="14">14 дней</button><button data-d="30">30 дней</button></div>
+    <p class="note">Учитываются приложения с резервной копией: Размеры на фото, Мои шаблоны, Моя техническая база, Личные накопления, Учёт квартиры. Данные приложений только читаются.</p></div></div>
+  <div class="sec"><h2>Скрытые приложения</h2><div class="card" id="setHidden"></div></div>
+  <div class="sec"><h2>Добавленные вручную</h2><div class="card" id="setManual"></div>
+    <button class="btn block" id="setAdd">Добавить вручную</button></div>
+  </div></div>
+  <div class="grp" data-g="open"><button class="gh" aria-expanded="false"><span class="gtt"><span class="gt">Открытие приложений</span><span class="gs"></span></span><span class="gch" data-ic="chev"></span></button><div class="gb">
   <div class="sec"><h2>Вкладки</h2><div class="card"><label class="chk"><input type="checkbox" id="setTabs"><span>Держать открытые приложения во вкладках</span></label></div>
     <p class="note">Открытые приложения не перезагружаются при переключении: «Назад» с главного экрана приложения — к плиткам, касание плитки — снова в приложение. Открытые отмечены рамкой; закрыть — долгое нажатие на плитку → «Закрыть вкладку» или «Закрыть все». Одновременно открыто не больше 4 — самое давнее закроется. Если выключить — приложение открывается вместо плиток, как раньше.</p>
     <div id="setBarBox"><p class="note">Полоска вкладок вверху (▦ — к плиткам, значки открытых, × — закрыть):</p>
     <div class="seg" id="setBar"><button data-b="off">Не показывать</button><button data-b="multi">Когда 2 и больше</button><button data-b="always">Всегда</button></div></div></div>
   <div class="sec"><h2>Последнее приложение</h2><div class="card"><label class="chk"><input type="checkbox" id="setAuto"><span>Кнопка «Продолжить» с последним открытым приложением</span></label></div>
     <p class="note">Кнопка над плитками: одно касание — и вы в последнем приложении. «Назад» вернёт к плиткам.</p></div>
-  <div class="sec"><h2>Меню по долгому нажатию на значок</h2>
+  </div></div>
+  <div class="grp" data-g="icon"><button class="gh" aria-expanded="false"><span class="gtt"><span class="gt">Меню значка</span><span class="gs"></span></span><span class="gch" data-ic="chev"></span></button><div class="gb">
+  <div class="sec">
     <p class="note">Сейчас в меню:</p><div class="card" id="setShort"></div>
     <p class="note">Выберите до 4 приложений (порядок — как у плиток):</p><div class="card" id="setPick"></div>
     <button class="btn block pri" id="setCopy">Скопировать запрос</button>
     <p class="note">Меню значка хранится в файле на сервере, на устройстве его не поменять. Вставьте скопированный запрос в чат стартового приложения — после публикации меню обновится (Android может обновить его с задержкой до суток).</p></div>
-  <div class="sec" id="setFsSec"><h2>Экран</h2><button class="btn block" id="setFs">На весь экран</button>
+  </div></div>
+  <div class="grp" data-g="screen" id="setFsSec"><button class="gh" aria-expanded="false"><span class="gtt"><span class="gt">Экран</span><span class="gs"></span></span><span class="gch" data-ic="chev"></span></button><div class="gb">
+  <div class="sec"><button class="btn block" id="setFs">На весь экран</button>
     <p class="note">Только когда приложение открыто во вкладке браузера.</p></div>
+  </div></div>
   <div style="height:40px"></div>
 </div>
 <div id="tabScr" class="hidden">
@@ -190,19 +211,19 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 <div id="updBar" class="hidden"><span>Доступна новая версия</span><button id="updBtn">Обновить</button></div>
 <script>
 'use strict';
-const APP_VERSION='1.11',APP_DATE='16.11.2026';
+const APP_VERSION='1.12',APP_DATE='16.11.2026';
 const OWNER='mrtekhnik',PUB_HOST='mrtekhnik.github.io';
 const API=`https://api.github.com/users/${OWNER}/repos?per_page=100`;
 const EXCLUDE=['apps',PUB_HOST];
 const DB_NAME='apps_launcher',ICON_CACHE='apps-icons';
 const REFRESH_MS=10*60*1000;
-const LS={tabs:'apps.tabs',tabBar:'apps.tabBar',view:'apps.view',ver:'apps.verBadge',bk:'apps.bkRemind',bkDays:'apps.bkDays',last:'apps.last',auto:'apps.autoLast',tryAt:'apps.lastTry',okAt:'apps.lastOk',status:'apps.listStatus',opened:'apps.opened'};
+const LS={setOpen:'apps.setOpen',tabs:'apps.tabs',tabBar:'apps.tabBar',view:'apps.view',ver:'apps.verBadge',bk:'apps.bkRemind',bkDays:'apps.bkDays',last:'apps.last',auto:'apps.autoLast',tryAt:'apps.lastTry',okAt:'apps.lastOk',status:'apps.listStatus',opened:'apps.opened'};
 const $=s=>document.querySelector(s);
 const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v);}catch(e){}};
 
 /* ---------- значки ---------- */
-const ICONS={grid:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',close:'M18 6 6 18M6 6l12 12',dots:'M12 5h.01M12 12h.01M12 19h.01',back:'M15 18l-6-6 6-6',up:'M12 19V5M5 12l7-7 7 7',down:'M12 5v14M19 12l-7 7-7-7',hide:'M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 3.9M6.6 6.6C3.9 8.3 2 12 2 12s4 7 10 7a9.7 9.7 0 0 0 5.4-1.6'};
+const ICONS={chev:'M6 9l6 6 6-6',grid:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',close:'M18 6 6 18M6 6l12 12',dots:'M12 5h.01M12 12h.01M12 19h.01',back:'M15 18l-6-6 6-6',up:'M12 19V5M5 12l7-7 7 7',down:'M12 5v14M19 12l-7 7-7-7',hide:'M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 3.9M6.6 6.6C3.9 8.3 2 12 2 12s4 7 10 7a9.7 9.7 0 0 0 5.4-1.6'};
 const ic=n=>n==='dots'?'<svg class="i" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>':`<svg class="i" viewBox="0 0 24 24"><path d="${ICONS[n]}"/></svg>`;
 document.querySelectorAll('[data-ic]').forEach(b=>b.innerHTML=ic(b.dataset.ic));
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -513,6 +534,7 @@ function renderSettings(){if($('#setScr').classList.contains('hidden'))return;
   const m=$('#setManual');m.innerHTML='';const ms=order.filter(id=>apps.get(id)&&apps.get(id).manual);
   for(const id of ms){const r=rowEl(apps.get(id));const b=document.createElement('button');b.className='tb';b.textContent='Убрать';b.onclick=()=>removeManual(id);r.appendChild(b);m.appendChild(r);}
   if(!ms.length)m.appendChild(noneRow('Нет'));
+  applyGroups();groupSummaries();
   renderLockSet();$('#setScr').querySelector('.zmsg').textContent='';
   $('#setAuto').checked=lsGet(LS.auto)==='1';$('#setTabs').checked=tabsOn();$('#setBarBox').classList.toggle('hidden',!tabsOn());
   document.querySelectorAll('#setBar button').forEach(b=>b.classList.toggle('on',b.dataset.b===barMode()));
@@ -545,12 +567,25 @@ async function renderShortcuts(){const s=$('#setShort');
       await tx('meta','readwrite',t=>t.objectStore('meta').put({k:'shortPick',v:shortPick}));renderShortcuts();};
     pk.appendChild(r);}
   if(!ids.length)pk.appendChild(noneRow('Нет приложений'));
-  $('#setCopy').disabled=!shortPick.length;}
+  $('#setCopy').disabled=!shortPick.length;groupSummaries();}
 function shortRequest(){const ids=order.filter(id=>shortPick&&shortPick.includes(id)&&apps.has(id));
   return 'Поставь в меню значка «Мои приложения» (по порядку):\n'+ids.map((id,i)=>{const a=apps.get(id);return `${i+1}. ${a.title||a.name} — ${PUB_HOST}/${a.name}/`;}).join('\n');}
 $('#setCopy').onclick=async()=>{const t=shortRequest();
   try{await navigator.clipboard.writeText(t);toast('Скопировано — вставьте в чат стартового приложения',3500);}
   catch(e){await alertBox('Скопируйте запрос вручную',t);}};
+// карточки настроек: свёрнуты по умолчанию, открытые запоминаются
+const openGroups=()=>{try{const v=JSON.parse(lsGet(LS.setOpen)||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}};
+function setGroupOpen(g,on){const set=new Set(openGroups());on?set.add(g):set.delete(g);lsSet(LS.setOpen,set.size?JSON.stringify([...set]):null);applyGroups();}
+function applyGroups(){const o=new Set(openGroups());document.querySelectorAll('#setScr .grp').forEach(el=>{const on=o.has(el.dataset.g);el.classList.toggle('open',on);el.querySelector('.gh').setAttribute('aria-expanded',on?'true':'false');});}
+['click','change'].forEach(ev=>$('#setScr').addEventListener(ev,()=>setTimeout(()=>{if(!$('#setScr').classList.contains('hidden'))groupSummaries();},60)));
+document.querySelectorAll('#setScr .grp').forEach(el=>el.querySelector('.gh').onclick=()=>setGroupOpen(el.dataset.g,!el.classList.contains('open')));
+function groupSummaries(){const gs=g=>$('#setScr .grp[data-g="'+g+'"] .gs');const c=lockCfg();
+  gs('lock').textContent=c?`Включена: ${c.pin?'PIN-код':'пароль'}${c.bio?' и отпечаток':''}`:'Выключена';
+  const vn={l:'крупные',m:'обычные',s:'мелкие',list:'список'}[curView()],hc=order.filter(id=>hidden.has(id)&&apps.has(id)).length;
+  gs('tiles').textContent=`Видно ${visibleIds().length}${hc?`, скрыто ${hc}`:''} · ${vn}`;
+  gs('open').textContent=(tabsOn()?'Во вкладках':'Вместо плиток')+(lsGet(LS.auto)==='1'?' · кнопка «Продолжить»':'');
+  gs('icon').textContent=shortNow&&shortNow.length?shortNow.map(x=>{const a=[...apps.values()].find(z=>z.url===x.url);return a?a.title||a.name:x.title;}).join(', '):'Пусто';
+  gs('screen').textContent='Только во вкладке браузера';}
 function openSettings(){history.pushState({s:1},'');$('#mainScr').classList.add('hidden');$('#setScr').classList.remove('hidden');window.scrollTo(0,0);renderSettings();}
 function closeSettingsView(){$('#setScr').classList.add('hidden');$('#mainScr').classList.remove('hidden');render();}
 $('#setBack').onclick=()=>history.back();
@@ -639,7 +674,7 @@ function showLock(){const c=lockCfg();if(!c||appLocked)return;appLocked=true;con
     const m2=t=>el.querySelector('.lkm').textContent=t;
     el.querySelector('.lkc').onclick=()=>{appLocked=false;showLock();};
     el.querySelector('.lkx').onclick=async()=>{const w=lockUntil-Date.now();if(w>0){m2(`Подождите ${Math.ceil(w/1000)} с`);return;}
-      if(await pwHash(normRec(el.querySelector('.lkd').value),c.rsalt,c.iter||150000)===c.rhash){saveLock(null);unlock();openSettings();toast('Защита снята — задайте новый пароль',4000);return;}
+      if(await pwHash(normRec(el.querySelector('.lkd').value),c.rsalt,c.iter||150000)===c.rhash){saveLock(null);unlock();setGroupOpen('lock',true);openSettings();toast('Защита снята — задайте новый пароль',4000);return;}
       lockTries++;if(lockTries>=5){lockTries=0;lockUntil=Date.now()+30000;m2('5 неверных попыток — подождите 30 с');}else m2('Неверный код');};};}
 // запуск из меню значка лаунчера: ?open=<имя>. При защите — только после входа
 let pendingOpen=null,lastOpenReq={id:'',t:0};
@@ -675,7 +710,7 @@ function renderLockSet(){const q=c=>$('#setScr').querySelector(c),c=lockCfg(),on
   q('.zrec').classList.toggle('hidden',!on);if(on)q('.zrst').textContent=c.rhash?'Код восстановления создан':'Кода восстановления нет';
   const af=c&&c.after!==undefined?c.after:5;q('.zaf').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.a===af));
   const im=c?idleMin(c):5;q('.zid').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.i===im));
-  bioAvailable().then(av=>q('.zbioc').classList.toggle('hidden',!on||!av));}
+  bioAvailable().then(av=>q('.zbioc').classList.toggle('hidden',!on||!av));groupSummaries();}
 {const q=c=>$('#setScr').querySelector(c),msg=t=>q('.zmsg').textContent=t;
   const curOk=async()=>{const c=lockCfg();if(!c)return true;if(await pwHash(q('.zp0').value,c.salt,c.iter)===c.hash)return true;msg('Текущий пароль неверный');return false;};
   q('.zsv').onclick=async()=>{const a=q('.zp1').value,b=q('.zp2').value;if(a.length<4){msg('Не короче 4 символов');return;}if(a!==b){msg('Пароли не совпадают');return;}
