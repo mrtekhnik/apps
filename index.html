@@ -159,8 +159,11 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
     <p class="zmsg"></p></div>
     <div class="card zrec" style="margin-top:10px"><div class="row" style="padding-right:8px"><span class="t zrst"></span><button class="tb zrgen">Новый код</button></div></div>
     <div class="card zbioc" style="margin-top:10px"><label class="chk"><input type="checkbox" class="zb"><span>Отпечаток пальца или лицо</span></label></div>
-    <div class="zafw"><p class="note">Снова спрашивать после работы в фоне:</p>
-    <div class="seg zaf"><button data-a="0">Сразу</button><button data-a="1">1 мин</button><button data-a="5">5 мин</button><button data-a="15">15 мин</button><button data-a="-1">При запуске</button></div></div>
+    <div class="zafw"><p class="note">При сворачивании / переключении вкладки:</p>
+    <div class="seg zaf"><button data-a="0">Сразу</button><button data-a="1">1 мин</button><button data-a="5">5 мин</button><button data-a="15">15 мин</button><button data-a="-1">При запуске</button></div>
+    <p class="note">Если не пользуетесь приложением (нет движений мыши, касаний и нажатий клавиш — в лаунчере и в открытых в нём приложениях):</p>
+    <div class="seg zid"><button data-i="0">Не блокировать</button><button data-i="1">1 мин</button><button data-i="5">5 мин</button><button data-i="15">15 мин</button></div>
+    <button class="btn block zlk" style="margin-top:10px">Заблокировать сейчас (Alt+L)</button></div>
     <p class="note">Защита закрывает экран лаунчера вместе с открытыми в нём приложениями. Это защита от чужих глаз, а не шифрование: данные приложений хранятся в браузере без шифрования, и приложение можно открыть по его адресу в Chrome в обход лаунчера — для этого у приложений своя защита. Если забудете пароль — снять защиту можно только кодом восстановления (он показывается один раз, сохраните его вне телефона) или войти отпечатком. Сброса без кода нет.</p></div>
   <div class="sec"><h2>Вкладки</h2><div class="card"><label class="chk"><input type="checkbox" id="setTabs"><span>Держать открытые приложения во вкладках</span></label></div>
     <p class="note">Открытые приложения не перезагружаются при переключении: «Назад» с главного экрана приложения — к плиткам, касание плитки — снова в приложение. Открытые отмечены рамкой; закрыть — долгое нажатие на плитку → «Закрыть вкладку» или «Закрыть все». Одновременно открыто не больше 4 — самое давнее закроется. Если выключить — приложение открывается вместо плиток, как раньше.</p>
@@ -187,7 +190,7 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 <div id="updBar" class="hidden"><span>Доступна новая версия</span><button id="updBtn">Обновить</button></div>
 <script>
 'use strict';
-const APP_VERSION='1.10',APP_DATE='16.11.2026';
+const APP_VERSION='1.11',APP_DATE='16.11.2026';
 const OWNER='mrtekhnik',PUB_HOST='mrtekhnik.github.io';
 const API=`https://api.github.com/users/${OWNER}/repos?per_page=100`;
 const EXCLUDE=['apps',PUB_HOST];
@@ -413,7 +416,7 @@ async function openTab(a){let t=tabs.find(x=>x.id===a.id);
       toast(`Закрыта вкладка «${oa?oa.title||oa.name:old.id}» — открыто не больше ${MAX_TABS}`,3500);}
     const f=document.createElement('iframe');f.src=a.url;f.title=a.title||a.name;
     f.allow='fullscreen; clipboard-read; clipboard-write; web-share; camera; microphone; geolocation; publickey-credentials-get; publickey-credentials-create';
-    f.dataset.id=a.id;$('#tabFrames').appendChild(f);t={id:a.id,frame:f,used:0};tabs.push(t);}
+    f.dataset.id=a.id;$('#tabFrames').appendChild(f);watchFrame(f);t={id:a.id,frame:f,used:0};tabs.push(t);}
   showTab(a.id);}
 function showTab(id){const t=tabs.find(x=>x.id===id);if(!t)return;activeTab=id;t.used=Date.now();
   for(const x of tabs)x.frame.classList.toggle('off',x.id!==id);
@@ -645,11 +648,25 @@ function requestOpen(name){name=String(name||'').trim();if(!name||!/^[\w.-]+$/.t
   pendingOpen=id;flushOpen();}
 function flushOpen(){if(!pendingOpen||appLocked||!loaded)return;const id=pendingOpen;pendingOpen=null;
   const a=apps.get(id)||{id,name:id,url:appUrl(id),title:id,icon:''};openHere(a);}
-function unlock(){appLocked=false;lockTries=0;setTimeout(flushOpen,0);if(fsWant&&!fsOn())armFull();const el=$('#lockScr');el.classList.add('hidden');el.innerHTML='';
+function unlock(){appLocked=false;lockTries=0;markAct();setTimeout(flushOpen,0);if(fsWant&&!fsOn())armFull();const el=$('#lockScr');el.classList.add('hidden');el.innerHTML='';
   if(activeTab){const t=tabs.find(x=>x.id===activeTab);try{t&&t.frame.contentWindow.focus();}catch(e){}}}
 document.addEventListener('visibilitychange',()=>{const c=lockCfg();if(!c)return;
   if(document.visibilityState==='hidden'){hiddenAt=Date.now();if(c.after===0)showLock();}
   else if(c.after>0&&hiddenAt&&Date.now()-hiddenAt>=c.after*60000)showLock();});
+// бездействие: учитываются действия в лаунчере и внутри открытых в нём приложений
+let lastAct=Date.now();
+const ACT_EVENTS=['pointerdown','pointermove','keydown','wheel','scroll','touchstart'];
+const markAct=()=>{lastAct=Date.now();};
+const idleMin=c=>c.idle==null?5:c.idle;
+function lockNow(){if(!lockCfg()){toast('Сначала задайте пароль в настройках');return;}showLock();}
+function onKeyLock(e){if(e.altKey&&!e.ctrlKey&&!e.metaKey&&(e.code==='KeyL')&&lockCfg()&&!appLocked){e.preventDefault();lockNow();}}
+ACT_EVENTS.forEach(ev=>document.addEventListener(ev,markAct,{passive:true,capture:true}));
+document.addEventListener('keydown',onKeyLock,true);
+function watchFrame(f){const hook=()=>{try{const d=f.contentDocument;if(!d||d.__appsHooked)return;d.__appsHooked=true;
+    ACT_EVENTS.forEach(ev=>d.addEventListener(ev,markAct,{passive:true,capture:true}));d.addEventListener('keydown',onKeyLock,true);}catch(e){}};
+  f.addEventListener('load',hook);hook();}
+setInterval(()=>{if(appLocked)return;const c=lockCfg();if(!c)return;const m=idleMin(c);
+  if(m>0&&Date.now()-lastAct>=m*60000)showLock();},5000);
 // настройки защиты
 function renderLockSet(){const q=c=>$('#setScr').querySelector(c),c=lockCfg(),on=!!c;
   q('.zst').textContent=on?`Вход по ${c.pin?'PIN-коду':'паролю'} включён`+(c.bio?', отпечаток или лицо тоже':''):'Защита выключена — лаунчер открывается без пароля.';
@@ -657,6 +674,7 @@ function renderLockSet(){const q=c=>$('#setScr').querySelector(c),c=lockCfg(),on
   q('.zb').checked=!!(c&&c.bio);q('.zafw').classList.toggle('hidden',!on);
   q('.zrec').classList.toggle('hidden',!on);if(on)q('.zrst').textContent=c.rhash?'Код восстановления создан':'Кода восстановления нет';
   const af=c&&c.after!==undefined?c.after:5;q('.zaf').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.a===af));
+  const im=c?idleMin(c):5;q('.zid').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.i===im));
   bioAvailable().then(av=>q('.zbioc').classList.toggle('hidden',!on||!av));}
 {const q=c=>$('#setScr').querySelector(c),msg=t=>q('.zmsg').textContent=t;
   const curOk=async()=>{const c=lockCfg();if(!c)return true;if(await pwHash(q('.zp0').value,c.salt,c.iter)===c.hash)return true;msg('Текущий пароль неверный');return false;};
@@ -669,7 +687,9 @@ function renderLockSet(){const q=c=>$('#setScr').querySelector(c),c=lockCfg(),on
   q('.zb').onchange=async()=>{const c=lockCfg();if(!c)return;if(q('.zb').checked){try{c.bio=await bioRegister();saveLock(c);msg('Отпечаток или лицо подключены');}
       catch(e){q('.zb').checked=false;msg('Не удалось подключить: '+(e&&e.name==='NotAllowedError'?'отменено':e&&e.message||e));}}
     else{delete c.bio;saveLock(c);msg('Вход отпечатком отключён');}renderLockSet();};
-  q('.zaf').querySelectorAll('button').forEach(b=>b.onclick=()=>{const c=lockCfg();if(!c)return;c.after=+b.dataset.a;saveLock(c);renderLockSet();});}
+  q('.zaf').querySelectorAll('button').forEach(b=>b.onclick=()=>{const c=lockCfg();if(!c)return;c.after=+b.dataset.a;saveLock(c);renderLockSet();});
+  q('.zid').querySelectorAll('button').forEach(b=>b.onclick=()=>{const c=lockCfg();if(!c)return;c.idle=+b.dataset.i;saveLock(c);markAct();renderLockSet();});
+  q('.zlk').onclick=()=>lockNow();}
 
 /* ---------- хранилище: сколько занимает каждое приложение ---------- */
 function sizeOf(v,depth){depth=depth||0;if(v==null)return 8;const t=typeof v;if(t==='string')return v.length*2;if(t!=='object')return 8;
@@ -702,9 +722,9 @@ function showStorage(){modal((box,close)=>{box.innerHTML='<h3>Хранилище
 
 /* ---------- меню ---------- */
 $('#menuBtn').onclick=async()=>{
-  const k=await choose('Меню','',[...(fsCan()?[{k:'fs',l:fsOn()?'Выйти из полноэкранного режима':'На весь экран'}]:[]),{k:'rf',l:'Обновить список'},{k:'add',l:'Добавить вручную'},{k:'st',l:'Настройки'},{k:'stor',l:'Хранилище'},{k:'up',l:'Проверить обновления'}],
+  const k=await choose('Меню','',[...(fsCan()?[{k:'fs',l:fsOn()?'Выйти из полноэкранного режима':'На весь экран'}]:[]),{k:'rf',l:'Обновить список'},{k:'add',l:'Добавить вручную'},{k:'st',l:'Настройки'},{k:'stor',l:'Хранилище'},{k:'up',l:'Проверить обновления'},...(lockCfg()?[{k:'lock',l:'Заблокировать сейчас (Alt+L)'}]:[])],
     `Версия ${APP_VERSION} от ${APP_DATE}<br>${statusLine()}`);
-  if(k==='fs')toggleFull();else if(k==='rf')refreshList(true);else if(k==='add')addManual();else if(k==='st')openSettings();else if(k==='stor')showStorage();else if(k==='up')checkUpdate();};
+  if(k==='fs')toggleFull();else if(k==='rf')refreshList(true);else if(k==='add')addManual();else if(k==='st')openSettings();else if(k==='stor')showStorage();else if(k==='lock')lockNow();else if(k==='up')checkUpdate();};
 
 window.addEventListener('online',()=>{render();maybeRefresh();});
 window.addEventListener('offline',()=>render());
