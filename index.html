@@ -157,10 +157,11 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
     <label class="fld">Повторите</label><input class="inp pwm zp2" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore>
     <div class="mbtns" style="justify-content:flex-start"><button class="btn pri zsv">Сохранить пароль</button><button class="btn zoff">Отключить защиту</button></div>
     <p class="zmsg"></p></div>
+    <div class="card zrec" style="margin-top:10px"><div class="row" style="padding-right:8px"><span class="t zrst"></span><button class="tb zrgen">Новый код</button></div></div>
     <div class="card zbioc" style="margin-top:10px"><label class="chk"><input type="checkbox" class="zb"><span>Отпечаток пальца или лицо</span></label></div>
     <div class="zafw"><p class="note">Снова спрашивать после работы в фоне:</p>
     <div class="seg zaf"><button data-a="0">Сразу</button><button data-a="1">1 мин</button><button data-a="5">5 мин</button><button data-a="15">15 мин</button><button data-a="-1">При запуске</button></div></div>
-    <p class="note">Защита закрывает экран лаунчера вместе с открытыми в нём приложениями. Это защита от чужих глаз, а не шифрование: данные приложений хранятся в браузере без шифрования, и приложение можно открыть по его адресу в Chrome в обход лаунчера — для этого у приложений своя защита. Пароль не восстанавливается: если забудете, на экране входа можно сбросить настройки лаунчера (порядок, скрытые, защиту) — данные приложений не затрагиваются.</p></div>
+    <p class="note">Защита закрывает экран лаунчера вместе с открытыми в нём приложениями. Это защита от чужих глаз, а не шифрование: данные приложений хранятся в браузере без шифрования, и приложение можно открыть по его адресу в Chrome в обход лаунчера — для этого у приложений своя защита. Если забудете пароль — снять защиту можно только кодом восстановления (он показывается один раз, сохраните его вне телефона) или войти отпечатком. Сброса без кода нет.</p></div>
   <div class="sec"><h2>Вкладки</h2><div class="card"><label class="chk"><input type="checkbox" id="setTabs"><span>Держать открытые приложения во вкладках</span></label></div>
     <p class="note">Открытые приложения не перезагружаются при переключении: «Назад» с главного экрана приложения — к плиткам, касание плитки — снова в приложение. Открытые отмечены рамкой; закрыть — долгое нажатие на плитку → «Закрыть вкладку» или «Закрыть все». Одновременно открыто не больше 4 — самое давнее закроется. Если выключить — приложение открывается вместо плиток, как раньше.</p>
     <div id="setBarBox"><p class="note">Полоска вкладок вверху (▦ — к плиткам, значки открытых, × — закрыть):</p>
@@ -186,7 +187,7 @@ header.top h1{font-size:18px;margin:0 6px;flex:1;white-space:nowrap;overflow:hid
 <div id="updBar" class="hidden"><span>Доступна новая версия</span><button id="updBtn">Обновить</button></div>
 <script>
 'use strict';
-const APP_VERSION='1.8',APP_DATE='16.11.2026';
+const APP_VERSION='1.9',APP_DATE='16.11.2026';
 const OWNER='mrtekhnik',PUB_HOST='mrtekhnik.github.io';
 const API=`https://api.github.com/users/${OWNER}/repos?per_page=100`;
 const EXCLUDE=['apps',PUB_HOST];
@@ -590,6 +591,20 @@ async function pwHash(pw,salt,iter){const k=await crypto.subtle.importKey('raw',
   return b64(await crypto.subtle.deriveBits({name:'PBKDF2',salt:ub64(salt),iterations:iter,hash:'SHA-256'},k,256));}
 async function setPassword(pw){const salt=b64(crypto.getRandomValues(new Uint8Array(16))),iter=150000,c=lockCfg()||{after:5};
   Object.assign(c,{v:1,salt,iter,hash:await pwHash(pw,salt,iter),pin:/^\d+$/.test(pw)});saveLock(c);}
+// код восстановления: показывается один раз; хранится только хэш
+const REC_ABC='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const normRec=t=>String(t||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+async function newRecovery(){const r=crypto.getRandomValues(new Uint8Array(16));let code='';for(let i=0;i<16;i++)code+=REC_ABC[r[i]%REC_ABC.length];
+  const c=lockCfg();if(!c)return null;const salt=b64(crypto.getRandomValues(new Uint8Array(16)));c.rsalt=salt;c.rhash=await pwHash(code,salt,c.iter||150000);saveLock(c);
+  return code.match(/.{4}/g).join('-');}
+function showRecovery(code){return modal((box,close)=>{
+  box.innerHTML=`<h3>Код восстановления</h3><p class="txt">Если забудете пароль, снять защиту можно только этим кодом. Он показывается один раз — сохраните его не на этом телефоне (запишите или сохраните на ПК).</p>
+  <p style="font:700 22px/1.4 ui-monospace,Consolas,monospace;letter-spacing:1px;text-align:center;margin:14px 0;user-select:all" class="rcode"></p>
+  <div class="mbtns"><button class="btn rcp">Скопировать</button><button class="btn pri rok">Я сохранил код</button></div>`;
+  box.querySelector('.rcode').textContent=code;
+  box.querySelector('.rcp').onclick=async()=>{try{await navigator.clipboard.writeText(code);toast('Код скопирован');}catch(e){toast('Выделите код и скопируйте вручную');}};
+  box.querySelector('.rok').onclick=()=>close(true);
+  modalOpenedAt=Date.now()+1e12;});}
 async function bioAvailable(){try{return !!(window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());}catch(e){return false;}}
 async function bioRegister(){const cr=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:'Мои приложения',id:location.hostname},
   user:{id:crypto.getRandomValues(new Uint8Array(16)),name:'apps',displayName:'Мои приложения'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
@@ -609,14 +624,18 @@ function showLock(){const c=lockCfg();if(!c||appLocked)return;appLocked=true;con
   q('.lkg').onclick=go;p.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go();}});
   const bio=async()=>{try{if(await bioCheck(c.bio))unlock();}catch(e){msg('Не получилось — введите '+(c.pin?'PIN-код':'пароль'));p.focus();}};
   if(c.bio){q('.lkb').onclick=bio;setTimeout(bio,250);}else setTimeout(()=>p.focus(),100);
-  q('.lkf').onclick=()=>{q('.lk').innerHTML=`<h2>Пароль не восстанавливается</h2><p class="lkr">Можно сбросить настройки лаунчера на этом устройстве: защиту, порядок и скрытые плитки, вид и метки.
-    Данные ваших приложений не затрагиваются. Список приложений лаунчер загрузит заново.</p><input class="inp lkd" placeholder="напишите СБРОСИТЬ" autocomplete="off">
-    <button class="btn lkx" style="background:#c62828;color:#fff">Сбросить настройки лаунчера</button><button class="btn ghost lkc">Назад</button>`;
+  q('.lkf').onclick=()=>{
+    if(!c.rhash){q('.lk').innerHTML=`<h2>Код восстановления не создан</h2><p class="lkr">Снять защиту без пароля нельзя${c.bio?' — попробуйте войти отпечатком или лицом':''}.
+      Последний способ — удалить в настройках Chrome данные сайта mrtekhnik.github.io, но это сотрёт данные ВСЕХ ваших приложений на этом устройстве.</p><button class="btn ghost lkc">Назад</button>`;
+      el.querySelector('.lkc').onclick=()=>{appLocked=false;showLock();};return;}
+    q('.lk').innerHTML=`<h2>Код восстановления</h2><p class="lkr">Введите код, который показывался при установке пароля. Защита снимется, затем задайте новый пароль в настройках.</p>
+    <input class="inp lkd" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <button class="btn pri lkx">Снять защиту</button><p class="lkm"></p><button class="btn ghost lkc">Назад</button>`;
+    const m2=t=>el.querySelector('.lkm').textContent=t;
     el.querySelector('.lkc').onclick=()=>{appLocked=false;showLock();};
-    el.querySelector('.lkx').onclick=async()=>{if(el.querySelector('.lkd').value.trim().toUpperCase()!=='СБРОСИТЬ')return;
-      for(const t of tabs)t.frame.remove();
-      try{Object.keys(localStorage).filter(k=>k.startsWith('apps.')).forEach(k=>localStorage.removeItem(k));}catch(e){}
-      try{db&&db.close();}catch(e){}await new Promise(r=>{const d=indexedDB.deleteDatabase(DB_NAME);d.onsuccess=d.onerror=d.onblocked=()=>r();});location.reload();};};}
+    el.querySelector('.lkx').onclick=async()=>{const w=lockUntil-Date.now();if(w>0){m2(`Подождите ${Math.ceil(w/1000)} с`);return;}
+      if(await pwHash(normRec(el.querySelector('.lkd').value),c.rsalt,c.iter||150000)===c.rhash){saveLock(null);unlock();openSettings();toast('Защита снята — задайте новый пароль',4000);return;}
+      lockTries++;if(lockTries>=5){lockTries=0;lockUntil=Date.now()+30000;m2('5 неверных попыток — подождите 30 с');}else m2('Неверный код');};};}
 function unlock(){appLocked=false;lockTries=0;if(fsWant&&!fsOn())armFull();const el=$('#lockScr');el.classList.add('hidden');el.innerHTML='';
   if(activeTab){const t=tabs.find(x=>x.id===activeTab);try{t&&t.frame.contentWindow.focus();}catch(e){}}}
 document.addEventListener('visibilitychange',()=>{const c=lockCfg();if(!c)return;
@@ -627,12 +646,16 @@ function renderLockSet(){const q=c=>$('#setScr').querySelector(c),c=lockCfg(),on
   q('.zst').textContent=on?`Вход по ${c.pin?'PIN-коду':'паролю'} включён`+(c.bio?', отпечаток или лицо тоже':''):'Защита выключена — лаунчер открывается без пароля.';
   q('.zcur').classList.toggle('hidden',!on);q('.zl1').textContent=on?'Новый пароль или PIN (если хотите сменить)':'Новый пароль или PIN (от 4 символов)';q('.zoff').classList.toggle('hidden',!on);
   q('.zb').checked=!!(c&&c.bio);q('.zafw').classList.toggle('hidden',!on);
+  q('.zrec').classList.toggle('hidden',!on);if(on)q('.zrst').textContent=c.rhash?'Код восстановления создан':'Кода восстановления нет';
   const af=c&&c.after!==undefined?c.after:5;q('.zaf').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.a===af));
   bioAvailable().then(av=>q('.zbioc').classList.toggle('hidden',!on||!av));}
 {const q=c=>$('#setScr').querySelector(c),msg=t=>q('.zmsg').textContent=t;
   const curOk=async()=>{const c=lockCfg();if(!c)return true;if(await pwHash(q('.zp0').value,c.salt,c.iter)===c.hash)return true;msg('Текущий пароль неверный');return false;};
   q('.zsv').onclick=async()=>{const a=q('.zp1').value,b=q('.zp2').value;if(a.length<4){msg('Не короче 4 символов');return;}if(a!==b){msg('Пароли не совпадают');return;}
-    if(!await curOk())return;await setPassword(a);['.zp0','.zp1','.zp2'].forEach(c=>q(c).value='');msg('Пароль сохранён');renderLockSet();};
+    if(!await curOk())return;await setPassword(a);['.zp0','.zp1','.zp2'].forEach(c=>q(c).value='');msg('Пароль сохранён');renderLockSet();
+    if(!lockCfg().rhash){const code=await newRecovery();renderLockSet();await showRecovery(code);}};
+  q('.zrgen').onclick=async()=>{if(!q('.zp0').value){msg('Введите текущий пароль');q('.zp0').focus();return;}if(!await curOk())return;
+    q('.zp0').value='';const code=await newRecovery();msg('Создан новый код — старый больше не действует');renderLockSet();await showRecovery(code);};
   q('.zoff').onclick=async()=>{if(!await curOk())return;saveLock(null);q('.zp0').value='';msg('Защита отключена');renderLockSet();};
   q('.zb').onchange=async()=>{const c=lockCfg();if(!c)return;if(q('.zb').checked){try{c.bio=await bioRegister();saveLock(c);msg('Отпечаток или лицо подключены');}
       catch(e){q('.zb').checked=false;msg('Не удалось подключить: '+(e&&e.name==='NotAllowedError'?'отменено':e&&e.message||e));}}
